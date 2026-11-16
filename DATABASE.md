@@ -1,0 +1,72 @@
+# Database model and access rules
+
+PostgreSQL stores operational records, tenant boundaries and immutable report snapshots. Auth identities are supplied by Supabase Auth. Use SQL migrations for schema, constraints, grants, RLS and private Storage policies. This is the target schema for the milestones in [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md).
+
+## Entities and ownership
+
+Use UUID primary keys, `timestamptz` for instants, calendar dates for due dates, decimal values with explicit units for measurements and integer minor units plus currency for any future money fields. Tenant-owned tables carry a non-null `organization_id`. Mutable records written offline also have a monotonic integer `version`. Record creator/editor and timestamps where they establish accountability.
+
+| Entity | Key fields and relationships |
+| --- | --- |
+| `organizations`, `memberships`, `invitations` | Organization has display name and time zone (pilot default `Europe/Belgrade`). Membership links `auth.users` to organization, role and active status. Unique org/user. Invitations fix organization, intended email, role, expiry and accepted state. |
+| `customers`, `sites` | Customer belongs to organization; site belongs to customer. Site has stable code, name, address, optional contact, time zone and separate staff-only access notes. |
+| `systems`, `units` | System belongs to a site; unique normalized system code per site, room/position, type, optional manufacturer/model. Units belong to a system, with indoor/outdoor role, optional serial and model. Keep a stable system ID when a physical component is replaced. Archive old units and preserve visit history. |
+| `maintenance_plans`, `plan_systems` | Site, local start date/time, interval in months, enabled state and covered systems. Generate one visit per plan and local occurrence date. An administrator can pause future generation while retaining prior visits. |
+| `visits`, `visit_assignees` | Site, optional plan, local occurrence date, type, time window, lifecycle state, actual times, creator and version. Assignees are active org members. Billing-review flag is an office decision separate from completion and customer receipt. |
+| `visit_items` | One system per visit, location and org must match. Store outcome, work performed, finding, reason for no access, public notes and version. Permit several assigned technicians to work on different items. |
+| `readings`, `part_usages` | Children of visit item. Reading has kind, context/mode, status, value and unit; a measured value can be zero. Part has name/code, quantity and unit. Preserve captured descriptions even if catalogs change. |
+| `attachments` | Item, storage provider and object identifier (Cloudinary authenticated image or private PDF Storage path), file type/size, caption, visibility, upload state, author. Only verified uploaded objects may appear in an issued report. |
+| `follow_ups` | Source visit item, type (quote, repair or revisit), responsible staff member, optional customer action, deadline, state. A revisit may link to a new visit; retain the original finding. |
+| `report_revisions`, `report_links`, `report_receipts` | Unique visit/revision; report number, snapshot, template version, issuer, reason for amendment, artifact state/path/checksum. Link records store token digest, expiry and revocation. Receipt records refer to the exact revision and link. |
+| `import_batches`, `mutation_receipts`, `jobs`, `audit_events` | Import preview and content/mapping digest; operation UUID, payload hash and result; durable jobs with stable dedupe key, lease and retry state; critical changes with actor and time. Keep idempotency records at least as long as the supported offline retry period. |
+
+## Enforce relationships at the database
+
+- Add unique `(organization_id, id)` keys for tenant parents and composite foreign keys from children. For a visit item, enforce the same organization **and site** using composite references to both visit and system. Changing a parent site once it has history requires a deliberate transfer workflow; archive and create a replacement for the pilot.
+- Constrain `(organization_id, visit_id, system_id)`, `(organization_id, visit_id, revision_no)` and the plan occurrence key. Allocate human-readable work order numbers under a per-organization/year counter or an equivalent concurrency-safe mechanism. Revisions share the work order number.
+- Visit outcomes use `pending`, `serviced`, `repair_needed` and `no_access`. Submission requires at least one item and no pending items. Inspection count includes serviced and repair_needed. A no-access item carries a reason and cannot claim a measured reading or completed inspection. Each outstanding item has a linked follow-up with an accountable staff owner and deadline; the customer may be the next person expected to act.
+- Set reading value and unit when measured. For `not_measured` or `not_applicable` store a null value and optional note. Keep private notes and public report text in explicitly separated fields or relations; RLS alone cannot hide individual columns.
+- Archive operational parents referenced by visits. Foreign-key restrictions and immutable revision snapshots preserve history. Do not cascade organization/member removal into previously issued evidence as a routine UI action.
+- Index all tenant/relationship keys used in access policies and common queries: assigned visits by date, systems by site and normalized code, units by serial, open follow-ups by due date, due plans, and claimable jobs by status/time.
+
+## Access model
+
+Enable RLS on every exposed tenant table, including relationship tables. Base policies on `auth.uid()`, active membership and, for field records, visit assignment. Keep membership lookup helpers free of recursive RLS evaluation. Organization selection in the UI is context, never proof of membership.
+
+| Caller | Read | Write |
+| --- | --- | --- |
+| Owner | All organization work and staff | Membership, operations, report issuance and sharing. Preserve at least one active owner. |
+| Coordinator | Organization operations and roster needed for scheduling | Register, plan, assign, review, export, issue and share; membership changes reserved for owner. |
+| Technician | Assigned visit bundle, necessary site information and service history of the systems on an assigned visit | Findings, readings, photos, follow-ups and field submission for editable assigned work. |
+| Recipient | One frozen revision via validated, revocable token | An acknowledged receipt for that revision, by explicit action only. |
+| Worker | Minimal queued job context and required snapshots/files | Claim/complete jobs and maintain render or recurrence state. No general browser-accessible job endpoint. |
+
+Keep tables supporting invitations, idempotency, jobs, tokens and audit in a non-exposed schema or deny access to API roles. For stateful/transactional operations expose narrow RPCs instead of granting raw client updates to lifecycle state. If a function needs elevated execution, give its owner minimum privileges, fix its search path, schema-qualify names, explicitly check the actor, revoke default PUBLIC execution and grant only the needed entry point. Apply equivalent authorization to private Storage upload/download paths. A path prefix is only a locator.
+
+## Migration and verification
+
+M1 implements `organizations` and `memberships`, plus private workspace-creation receipts, invitations and identity audit events. Both have RLS and authenticated read grants; memberships expose only the caller's own active rows. A fixed-search-path membership predicate in the non-exposed `hvac_private` schema permits reading only organizations with active membership. Browser/API roles have no insert, update or delete grants. Organization creation, invitations and staff mutations are M1b RPC commands; the application does not use `DATABASE_URL` to bypass user policies.
+
+M1b adds optimistic `version` columns and narrow public RPCs. `create_workspace` atomically creates the organization and owner membership and binds an actor/operation UUID to its canonical payload and result. `update_workspace_member` and `update_workspace` require the caller to remain an active owner after obtaining an organization lock. Competing owner changes serialize, preserving at least one active owner. Stale versions fail with `40001`; raw table writes remain denied.
+
+Private invitations bind organization, normalized email, role, token digest, issuer, expiry and acceptance/revocation state. Creation retries reuse the same operation and digest; reissuing supersedes a pending invitation. Acceptance requires a live verified identity with the intended email, locks the organization and invitation, and changes membership plus acceptance/audit state atomically. Accepted-link replay never reactivates a revoked member. Token-bearing responses never include the digest; anonymous lookup exposes only the company name, role and expiry for a currently valid pending token.
+
+Lifecycle RPCs run as a non-login, non-inheriting executor without Auth-schema or RLS-bypass privileges. RLS permits only that executor to perform its narrow table writes. The self-hosted Auth schema does not permit the migration role to delegate Auth grants: private, fixed-search-path identity bridges owned by the existing database administrator return only the verified caller, their email, or a roster explicitly authorized for the requested organization. These helpers are not exposed RPCs. Migrations temporarily acquire function-owner authority, lock down effective execution grants, and revoke that authority before commit. Only the token-preview RPC permits anonymous execution.
+
+Use `npm run db:migrate` against the intended server-only `DATABASE_URL`. The runner loads the ignored environment files, takes a transaction advisory lock, checks SHA-256 migration checksums and records applied files in non-exposed `hvac_migrations.applied`. A retry skips matching files; changed applied files or failed SQL roll back. Add a new ordered SQL file for each subsequent change. Never reset the existing self-hosted stack.
+
+For development only, set `ALLOW_DEVELOPMENT_SEED=true` and a locally generated 12–72 byte `SEED_PASSWORD`, then run `npm run db:seed`. The seed creates two fictional organizations and owner A, technician A, owner B, unassigned and unconfirmed identities under `hvac.example.invalid`. Repeated seeds preserve passwords, membership state and existing fixtures; ID/email collisions fail atomically. These raw Auth inserts target the inspected GoTrue development schema and are not a production identity-provisioning API. Run `npm run test:db` for rollback-only policy tests against these fixtures. Tests temporarily revoke one fixture membership and roll back that change. Future visit-assignment policies are not yet implemented.
+
+Review migration SQL in version control and stage changes before production. Back up and release as described in [ARCHITECTURE.md](ARCHITECTURE.md).
+
+Test with two organizations, an unassigned and an assigned technician, a coordinator and a revoked member. Exercise both direct Supabase access and Next.js entry points. Include mismatched site/system, concurrent revisions, repeated recurrence, reimport, a zero reading, null readings and snapshot preservation after source data changes.
+
+References: [Supabase RLS](https://supabase.com/docs/guides/database/postgres/row-level-security), [Storage policies](https://supabase.com/docs/guides/storage/security/access-control), [database migrations](https://supabase.com/docs/guides/deployment/database-migrations).
+
+## M2a register and scheduling
+
+Migrations 005–006 add customers, sites, systems, scheduled visits, visit items and assignees. Composite foreign keys enforce organization/site relationships. Normalized uppercase site codes are unique within an organization; system codes are unique within a site. M2a is create-only: edits, archiving, component units, lifecycle transitions and field outcomes follow in later slices.
+
+`save_operation(organization, operation, kind, data)` requires an active owner/coordinator and serializes against membership changes using the organization lock. Its actor-scoped operation receipt binds the exact payload to its generated entity ID; equal retries return the existing result, changed payloads conflict. Visit creation atomically writes the visit, distinct planned systems and active assignees. Site-local start/end timestamps are converted to instants using the site's IANA time zone. Nonexistent start times are rejected; ambiguous local times currently use PostgreSQL's standard-time interpretation. Recurrence/DST anchor rules remain M5.
+
+Raw tables grant office-scoped SELECT only; authenticated direct writes remain denied. `operation_snapshot` is an authenticated, organization-scoped DTO read: office staff receive the register and schedule, technicians receive only assigned visits and relevant site/system details, with no organization-wide register. Active membership is checked again on every read. Today filters to the caller's assignments on the current site-local date. No application query uses SQL migration credentials.

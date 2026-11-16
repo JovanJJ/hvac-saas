@@ -1,0 +1,17 @@
+# Development-only override for the existing Supabase project. No database services are changed.
+services:
+  mail:
+    image: inbucket/inbucket:3.0.3
+    container_name: supabase-mail
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:9000:9000"
+  auth:
+    environment:
+      GOTRUE_SMTP_HOST: supabase-mail
+      GOTRUE_SMTP_PORT: "2500"
+      GOTRUE_SMTP_USER: ""
+      GOTRUE_SMTP_PASS: ""
+      GOTRUE_SMTP_ADMIN_EMAIL: no-reply@hvac.example.invalid
+      GOTRUE_SMTP_SENDER_NAME: Teren razvoj
+      GOTRUE_URI_ALLOW_LIST: http://localhost:3000/auth/callback,http://localhost:3000/auth/callback?next=/reset-password,http://localhost:3001/auth/callback,http://localhost:3001/auth/callback?next=/reset-password

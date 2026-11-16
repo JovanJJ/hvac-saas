@@ -1,0 +1,64 @@
+# Backend contracts
+
+Use request-scoped Supabase SSR clients and a small server-only data-access layer. Reuse command validation and authorization across Server Actions, Route Handlers and mobile replay. Server Components call the data-access layer directly for reads. This document defines the wire contracts required by the PWA and guest links; internal TypeScript names may evolve.
+
+## Identity and workspace entry points
+
+`/sign-in`, `/sign-up`, `/forgot-password` and `/reset-password` use validated Server Actions. `proxy.ts` refreshes cookie sessions; the DAL independently uses Supabase `getUser()` and requires a confirmed email. Do not authorize from `getSession()` alone. Auth uses the public client key under the caller's session; database migration credentials never participate in runtime requests.
+
+`/account` lists the caller's own active memberships and selects a workspace. `/` resolves the role-specific landing (`/office` for owners/coordinators, `/today` for technicians, `/onboarding` for accounts without memberships). A per-user HTTP-only workspace cookie is only a preference: all staff entry points resolve membership again and protect reads near their data source. Missing/revoked membership and disallowed deep links reveal no operational data.
+
+Workspace creation, identity updates, invitation creation/acceptance/revocation and membership changes are validated Server Actions backed by narrow database RPCs. They execute with the verified caller's Supabase session; the app never uses SQL migration credentials or a service-role client for tenant commands. Creation/invitation operation IDs make retries idempotent, and versions make competing updates explicit. Owner commands authorize again under the organization lock; concurrent last-owner changes cannot both succeed.
+
+The owner-only team page creates copyable invitation links for manual delivery. No email is sent by invitation creation. `lookup_workspace_invitation` accepts a token digest and returns limited current preview metadata; `accept_workspace_invitation` independently checks current verified email, expiry and revocation before atomically joining the organization. Reissue creates a new random token and revokes the old pending link. Active existing members retain their current role; an accepted link cannot restore revoked access. Role/active-state updates use explicit membership commands.
+
+`workspace_roster` is scoped to active owners/coordinators; coordinators receive active staff only. `workspace_invitations` and company/team settings are owner-only. Membership lists available by direct table access remain self-scoped. Private audit rows record actor, organization, event type and target identifier without raw tokens. Visit assignment and private-file rules remain later milestones.
+
+`/auth/confirm` accepts allowlisted signup/email/recovery token hashes and strips them by redirecting to a fixed destination. `/auth/callback` exchanges a PKCE code and permits only allowlisted staff routes and high-entropy invitation paths as the next path. Configure the existing stack's email templates and redirect allowlist per [README.md](README.md). Pending signup must preserve the SSR PKCE verifier: call sign-out only if signup actually returned a session. The development mail overlay and real email-link regression are described in [README.md](README.md). Recovery responses do not disclose account existence. A verified signed-in user may also change their password via `/reset-password`; the update ends their Supabase sessions and returns to sign-in. Failed/expired verification links return a recoverable message without provider error details.
+
+All session cookies are HTTP-only and SameSite=Lax, with Secure on HTTPS. Auth responses use private/no-store caching. New-password validation requires at least 12 characters and at most 72 UTF-8 bytes. Provider-side Auth throttling and outbound email configuration remain required. Next.js Server Function argument logging is disabled, and token-bearing callback, invitation and sign-in/sign-up requests are excluded from development access logs. Configure equivalent redaction at the production reverse proxy.
+
+## Requests and permissions
+
+Authenticate each staff entry point, verify the session/claims on the server, then resolve active organization membership. Check the role and visit assignment at the point of mutation. Validate IDs, enums, input lengths, allowed transitions, upload size/type and permitted report fields. Return UI-specific DTOs. User-initiated operations run under the user's authority. The worker and guest-report service use narrowly scoped server-only access paths. Do not trust a client-provided author, role, tenant label, storage path or verification status.
+
+| Entry point | Consumer and contract |
+| --- | --- |
+| Server Actions for invitations, register edits, scheduling, imports, sharing and office review | Staff web UI. Validate the command and return field errors or a typed success result; revalidate only affected views. Authenticated users may accept a valid invitation matching their verified identity. |
+| `GET /api/field/visits/:id` | Assigned staff. Returns a minimal, versioned offline bundle with scheduled systems, public/internal fields appropriate for the technician and relevant system history. |
+| `POST /api/field/sync` | Assigned staff. Bounded ordered batch; each operation has `operationId`, `entityId`, `baseVersion`, `type` and `payload`. Respond with a result for each operation; acknowledge successful earlier operations independently. |
+| `POST /api/field/attachments/prepare` and `/complete` | Authorize item and visibility, reserve an object ID and issue a short-lived private upload permission. Complete verifies stored object metadata and makes it available for the item. Retrying with the same ID reuses the reservation. |
+| Report preview / issue / amend | Issuer (owner/coordinator). Preview uses the same template as issuance; issue/amend freezes data transactionally and returns a revision ID and render state. The office can see render errors and retry the same revision. |
+| `GET /r/:token` and `POST /r/:token/receipt` | Guest. Validate token digest, expiry, revocation and revision on each request. Serve that revision privately. POST accepts an explicit acknowledgement and name/role; replay returns the existing acknowledgement for that link. Ordinary page views have no receipt side effect. |
+
+Use `401` for missing or expired authentication, `403` for disallowed actions on a known visible record, `404` for inaccessible object identifiers, `409` for a stale version or mismatched idempotency payload, and `422` for invalid domain input. A successful sync batch may include per-operation conflicts. Sensitive GET responses and public report downloads use private/no-store caching. Public links have high-entropy random tokens, a configurable expiry and a revocation action. Redact tokens from app and proxy logs.
+
+## Visit lifecycle
+
+| Transition | Conditions and effects |
+| --- | --- |
+| `scheduled → in_progress` | Assigned technician or operational staff starts the visit. Preserve actual start time. |
+| `in_progress → submitted` | Actor is assigned or authorized office staff; every included system has an explicit outcome. Validate follow-ups, timestamps and attachment completion. Commit outcomes and tasks consistently. |
+| `submitted → in_progress` | Before issue, owner/coordinator requests a correction with a reason. Field editing resumes. |
+| `submitted → issued` | Authorized office actor freezes the snapshot, visit/report number and new revision, and enqueues the PDF render in one transaction. The report can be shared when rendering succeeds. |
+| Amendment of issued visit | Authorized issuer supplies a reason and explicit corrections; validates a complete replacement snapshot, appends a new revision referencing the previous revision and updates the latest pointer atomically. Keep old bytes, tokens and receipts bound to their revision. Record corrected operational values/history in the same transaction. |
+| Cancellation | Owner/coordinator may cancel a scheduled or in-progress visit with a reason. Preserve recorded work for staff review; remove future assignments from the active schedule. |
+
+In Solo mode the owner may both submit and issue. A field device can queue a submission offline, but only a successful server response marks the visit as submitted. Office review for billing, client receipt and quote approval are independent events. Quote approval and invoice issuance are outside the MVP.
+
+## Replay, jobs and failure handling
+
+1. Scope an operation key to organization, actor and operation UUID. In a database transaction, lock/check the receipt, compare the canonical payload hash, enforce current access, check version, write domain changes and persist the result. A retry with the same payload returns the committed result to a still-authorized caller. A different payload under the same key returns a conflict.
+2. Version visit items independently. Two technicians editing different systems can both succeed. Stale edits to the same item return the current safe values/version and allow manual reconciliation. A final submission validates the aggregate and child versions; lock the visit consistently during finalization and writes to prevent late changes slipping into the snapshot.
+3. Keep failed photo blobs locally until confirmed. Submit only after required uploads complete or a user explicitly removes the unsubmitted attachment. Show terminal file-validation failures with a recovery action.
+4. Use transactionally enqueued jobs with unique logical keys. Workers use a lease, bounded retries/backoff and a visible failed state. Use a deterministic private path for a given revision, conditional writes and a recorded digest so retries cannot replace a different PDF. Share only verified ready artifacts.
+5. A maintenance recurrence is keyed by plan and intended local date. Generate a bounded forward window. Preserve existing attended/issued visits when a plan changes. For a monthly date absent in the target month, clamp to month-end while retaining the original anchor. In a daylight-saving gap use the next valid local time; for overlaps use the earlier occurrence and store the resulting instant.
+6. Imports preview using a normalized stable site/system key. Report missing values, ambiguous matches and duplicates by row. Capture content and mapping digest; applying that exact confirmed preview is idempotent. Commit a valid batch atomically; update only selected fields on existing records.
+
+Verify expiry during replay, a worker crash after writing an object, two simultaneous submissions, a stale cached visit after reassignment and revocation of a public link. References: [Next.js data security](https://nextjs.org/docs/app/guides/data-security), [Supabase SSR clients](https://supabase.com/docs/guides/auth/server-side/creating-a-client), [Supabase Storage access control](https://supabase.com/docs/guides/storage/security/access-control).
+
+## M2a operation entry points
+
+`/customers`, `/sites`, `/systems`, `/schedule` and `/visits/new` require owner/coordinator access. Register forms and scheduling share server-side validation/authorization and the transactional `save_operation` RPC. The workspace ID comes from verified server context; the RPC independently authorizes it. Stable per-form operation IDs protect repeated submissions. A successful form disables repeat input; refresh starts a new intended creation. Unknown-result retries must retain the original operation ID; durable offline retry storage follows in M4.
+
+`operation_snapshot` serves the office register/schedule and the restricted field schedule. `/today` shows current-day assigned visits, their site-local window, site/address/access note, and planned system codes/rooms. Editing outcomes, submission and office review remain M2b; there are no live field-edit links yet.

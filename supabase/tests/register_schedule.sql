@@ -1,0 +1,31 @@
+insert into public.memberships(organization_id,user_id,role) values('a1000000-0000-4000-8000-000000000001','a1000000-0000-4000-8000-000000000104','technician');
+set local role authenticated;
+select set_config('request.jwt.claim.sub','a1000000-0000-4000-8000-000000000101',true);
+do $$ declare org uuid:='a1000000-0000-4000-8000-000000000001'; m uuid; payload jsonb; snap jsonb; n integer;
+begin
+ perform public.save_operation(org,'c1000000-0000-4000-8000-000000000001','customer','{"name":"M2 test"}');
+ perform public.save_operation(org,'c1000000-0000-4000-8000-000000000002','site','{"customerId":"c1000000-0000-4000-8000-000000000001","code":"M2-TEST","name":"M2 site","address":"Primer","timeZone":"Europe/Belgrade"}');
+ perform public.save_operation(org,'c1000000-0000-4000-8000-000000000003','system','{"siteId":"c1000000-0000-4000-8000-000000000002","code":"KL-01","room":"Recepcija"}');
+ select membership_id into m from public.workspace_roster(org) where email='technician.a@hvac.example.invalid';
+ payload:=jsonb_build_object('siteId','c1000000-0000-4000-8000-000000000002','visitType','maintenance','start','2026-11-16T09:00','end','2026-11-16T10:00','members',jsonb_build_array(m),'systems',jsonb_build_array('c1000000-0000-4000-8000-000000000003'));
+ perform public.save_operation(org,'c1000000-0000-4000-8000-000000000004','visit',payload);
+ perform public.save_operation(org,'c1000000-0000-4000-8000-000000000004','visit',payload);
+ if (select count(*) from public.visits where id='c1000000-0000-4000-8000-000000000004')<>1 then raise exception 'duplicate visit'; end if;
+ begin
+ perform public.save_operation(org,'c1000000-0000-4000-8000-000000000005','visit',payload||'{"systems":["c1000000-0000-4000-8000-000000000009"]}');
+ raise exception 'invalid system allowed'; exception when invalid_parameter_value then null; end;
+ perform set_config('request.jwt.claim.sub','a1000000-0000-4000-8000-000000000102',true);
+ snap:=public.operation_snapshot(org);
+ if jsonb_array_length(snap->'customers')<>0 or not exists(select 1 from jsonb_array_elements(snap->'visits') v where v->>'id'='c1000000-0000-4000-8000-000000000004') then raise exception 'assigned bundle failed'; end if;
+ begin perform public.save_operation(org,gen_random_uuid(),'customer','{"name":"Denied"}');raise exception 'technician wrote register';exception when insufficient_privilege then null;end;
+ perform set_config('request.jwt.claim.sub','a1000000-0000-4000-8000-000000000103',true);
+ begin perform public.operation_snapshot(org);raise exception 'cross tenant bundle';exception when insufficient_privilege then null;end;
+ perform set_config('request.jwt.claim.sub','a1000000-0000-4000-8000-000000000104',true);
+ snap:=public.operation_snapshot(org); if jsonb_array_length(snap->'visits')<>0 or jsonb_array_length(snap->'sites')<>0 then raise exception 'unassigned technician received data'; end if;
+end $$;
+reset role;
+update public.memberships set active=false where user_id='a1000000-0000-4000-8000-000000000102';
+set local role authenticated;
+select set_config('request.jwt.claim.sub','a1000000-0000-4000-8000-000000000102',true);
+do $$ begin begin perform public.operation_snapshot('a1000000-0000-4000-8000-000000000001');raise exception 'revoked access';exception when insufficient_privilege then null;end;end $$;
+reset role;

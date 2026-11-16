@@ -1,20 +1,40 @@
 import type { NextConfig } from "next";
+import { PHASE_DEVELOPMENT_SERVER } from "next/constants";
 
-const nextConfig: NextConfig = {
-  /* config options here */
-  experimental: {
-    agentFeedback: true,
-  },
-  cacheComponents: true,
-  partialPrefetching: true,
-  turbopack: {
-    rules: {
-      "*.css": {
-        loaders: ["@tailwindcss/turbopack"],
-        as: "*.css",
+export default function nextConfig(phase: string): NextConfig {
+  const previewAlias: Record<string, string> =
+    phase === PHASE_DEVELOPMENT_SERVER
+      ? {}
+      : {
+          "@/features/visit-preview/visit-preview":
+            "./features/visit-preview/unavailable.tsx",
+        };
+  return {
+    output: "standalone",
+    logging: {
+      serverFunctions: false,
+      incomingRequests: {
+        ignore: [
+          /\/auth\/(confirm|callback)/,
+          /\/invite\//,
+          /\/(sign-in|sign-up)/,
+        ],
       },
     },
-  },
-};
-
-export default nextConfig;
+    experimental: {
+      agentFeedback: true,
+    },
+    cacheComponents: true,
+    partialPrefetching: true,
+    turbopack: {
+      // Exclude the fixture and its client graph from production output.
+      resolveAlias: previewAlias,
+      rules: {
+        "*.css": {
+          loaders: ["@tailwindcss/turbopack"],
+          as: "*.css",
+        },
+      },
+    },
+  };
+}
