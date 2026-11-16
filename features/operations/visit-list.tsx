@@ -1,4 +1,5 @@
 import type { ScheduledVisit } from "./types";
+import Link from "next/link";
 export function VisitList({ visits }: { visits: ScheduledVisit[] }) {
   return (
     <div className="mt-6 grid gap-4">
@@ -35,6 +36,7 @@ export function VisitList({ visits }: { visits: ScheduledVisit[] }) {
             ))}
           </ul>
           {visit.accessNote && <p>Pristup: {visit.accessNote}</p>}
+          <Link href={`/visits/${visit.id}`} className="button primary mt-4">Otvori posetu</Link>
         </article>
       ))}
     </div>

@@ -13,6 +13,9 @@ await withDatabase(async (db) => {
     "identity_access.sql",
     "workspace_commands.sql",
     "register_schedule.sql",
+    "visit_handover.sql",
+    "private_evidence.sql",
+    "report_issuance.sql",
   ]) {
     await db.query("begin");
     try {

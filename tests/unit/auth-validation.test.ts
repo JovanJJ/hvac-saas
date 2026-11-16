@@ -57,6 +57,19 @@ test("normalizes email, accepts existing sign-in passwords and validates new pas
 });
 
 test("callback destinations cannot redirect outside the allowed account routes", () => {
+  const revisionPath = "/office/reports/a1000000-0000-4000-8000-000000000001";
+  assert.equal(safeDestination(revisionPath), revisionPath);
+  assert.equal(safeDestination(revisionPath + "/../../settings"), "/account");
+  assert.equal(
+    safeDestination("/visits/a1000000-0000-4000-8000-000000000001/review"),
+    "/visits/a1000000-0000-4000-8000-000000000001/review",
+  );
+  assert.equal(
+    safeDestination(
+      "/visits/a1000000-0000-4000-8000-000000000001/../../settings",
+    ),
+    "/account",
+  );
   assert.equal(safeDestination("/reset-password"), "/reset-password");
   assert.equal(safeDestination("/office"), "/office");
   assert.equal(

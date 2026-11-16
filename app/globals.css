@@ -793,6 +793,14 @@
     }
   }
   @media print {
+    .staff-shell > header,
+    .staff-shell > footer,
+    .staff-shell > main > .eyebrow {
+      display: none;
+    }
+    .staff-shell {
+      padding: 0;
+    }
     @page {
       size: A4;
       margin: 15mm;

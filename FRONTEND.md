@@ -2,6 +2,12 @@
 
 The primary mobile journey is “Danas” → site → system → outcome → visit summary. Use Serbian Latin for field labels and plain language for errors. Separate the technician's daily work from the office review queue. The same responsive application supports both.
 
+M2b provides this journey online at `/today` → `/visits/[visitId]`, with per-system saved states and a submission summary. Office staff use `/office` → `/visits/[visitId]/review` → `/visits/[visitId]/preview`, or return work with a required reason. The draft customer preview is HTML with print styles; issuance is M3. Saving a pending or incomplete draft is allowed, but submission names unresolved systems and missing action owners/deadlines. Unsaved form data is retained after validation errors; only confirmed server saves survive reload. Durable offline drafts and conflict reconciliation remain M4.
+
+M3a adds a labeled photo panel per system with file selection, required caption and explicit “Za klijenta”/“Interno” choice. It distinguishes reserved upload, verified image and removal; failed uploads keep the selected File and stable reservation while the page stays open. After reload, a pending reservation offers verification retry or removal; unuploaded bytes are not durably retained until M4d. Pending-photo counts block the ready-to-submit message. Private image elements bypass shared image optimization, include dimensions to prevent collapsed lazy-loaded images, and reauthorize through the app on each request.
+
+M3b adds **Izdaj izveštaj** to the office review of a submitted visit. Its form explains that issuance locks the captured data. Success opens `/office/reports/[revisionId]`, showing the report number/revision, frozen content, issuer/time and the separate **PDF čeka izradu** state. The office home lists recent issued records, and the visit links back to its issued revision. Issued visits show read-only field/photo panels and no pre-issue correction form. Preview and revision reuse one document component; after issuance the preview also reads the frozen snapshot. There is no sharing/download control before M3c rendering succeeds.
+
 ## Screens and journeys
 
 | Screen | Required behavior |

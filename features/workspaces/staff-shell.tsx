@@ -17,7 +17,7 @@ export function StaffShell({
 }) {
   const { workspace, user, workspaces } = context;
   return (
-    <div className="mx-auto w-full max-w-5xl px-5 py-6">
+    <div className="staff-shell mx-auto w-full max-w-5xl px-5 py-6">
       <header className="mb-8 rounded-xl border border-[#dce4df] bg-white p-5">
         <div className="row mb-5">
           <Link href="/" className="text-3xl font-extrabold no-underline">

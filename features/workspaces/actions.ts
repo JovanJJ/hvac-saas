@@ -39,7 +39,7 @@ function databaseFailure(error: {
       "Poziv je istekao, opozvan ili više nije dostupan. Zatražite novi poziv.",
     );
   if (error.code === "42501") return fail("Nemate dozvolu za ovu promenu.");
-  if (error.code === "40001")
+  if (error.code === "PT409")
     return fail(
       "Podaci su u međuvremenu promenjeni. Osvežite stranicu i pokušajte ponovo.",
     );

@@ -1,0 +1,65 @@
+insert into public.memberships(organization_id,user_id,role) values('a1000000-0000-4000-8000-000000000001','a1000000-0000-4000-8000-000000000104','technician');
+set local role authenticated;
+select set_config('request.jwt.claim.sub','a1000000-0000-4000-8000-000000000101',true);
+do $$ declare org uuid:='a1000000-0000-4000-8000-000000000001'; m uuid; payload jsonb; snap jsonb; n integer;
+begin
+ perform public.save_operation(org,'e1000000-0000-4000-8000-000000000001','customer','{"name":"M2 test"}');
+ perform public.save_operation(org,'e1000000-0000-4000-8000-000000000002','site','{"customerId":"e1000000-0000-4000-8000-000000000001","code":"M3A-TEST","name":"M2 site","address":"Primer","timeZone":"Europe/Belgrade"}');
+ perform public.save_operation(org,'e1000000-0000-4000-8000-000000000003','system','{"siteId":"e1000000-0000-4000-8000-000000000002","code":"KL-01","room":"Recepcija"}');
+ select membership_id into m from public.workspace_roster(org) where email='technician.a@hvac.example.invalid';
+ payload:=jsonb_build_object('siteId','e1000000-0000-4000-8000-000000000002','visitType','maintenance','start','2026-11-16T09:00','end','2026-11-16T10:00','members',jsonb_build_array(m),'systems',jsonb_build_array('e1000000-0000-4000-8000-000000000003'));
+ perform public.save_operation(org,'e1000000-0000-4000-8000-000000000004','visit',payload);
+ perform public.save_operation(org,'e1000000-0000-4000-8000-000000000004','visit',payload);
+ if (select count(*) from public.visits where id='e1000000-0000-4000-8000-000000000004')<>1 then raise exception 'duplicate visit'; end if;
+ begin
+ perform public.save_operation(org,'e1000000-0000-4000-8000-000000000005','visit',payload||'{"systems":["e1000000-0000-4000-8000-000000000009"]}');
+ raise exception 'invalid system allowed'; exception when invalid_parameter_value then null; end;
+end $$;
+reset role;
+select set_config('hvac_test.verifier',(select secret from hvac_private.evidence_verifier where singleton),true);
+set local role authenticated;
+select set_config('request.jwt.claim.sub','a1000000-0000-4000-8000-000000000102',true);
+do $$ declare org uuid:='a1000000-0000-4000-8000-000000000001'; v uuid:='e1000000-0000-4000-8000-000000000004'; a uuid:='e1000000-0000-4000-8000-000000000010'; b jsonb; i uuid; p jsonb; verified jsonb; exp bigint:=extract(epoch from now())::bigint+120; signature text; ver integer;
+begin
+ b:=public.visit_bundle(org,v); i:=(b->'items'->0->>'id')::uuid;
+ p:=jsonb_build_object('itemId',i,'caption','Fiktivna fotografija','visibility','customer','bytes',68,'mimeType','image/png');
+ perform public.attachment_command(org,v,a,'reserve',p);
+ perform public.attachment_command(org,v,a,'reserve',p);
+ if jsonb_array_length(public.attachment_read(org,v,a))<>1 then raise exception 'duplicate reservation'; end if;
+ begin perform public.attachment_command(org,v,a,'reserve',p||'{"caption":"changed"}');raise exception 'mismatch allowed';exception when sqlstate 'PT409' then null;end;
+ begin perform public.attachment_command(org,v,a,'complete','{}');raise exception 'unverified accepted';exception when insufficient_privilege then null;end;
+ begin perform 1 from hvac_private.evidence_verifier;raise exception 'private key exposed';exception when insufficient_privilege then null;end;
+ begin update public.attachments set state='verified' where id=a;raise exception 'raw write accepted';exception when insufficient_privilege then null;end;
+ perform public.visit_command(org,v,gen_random_uuid(),'save',1,jsonb_build_object('itemId',i,'outcome','serviced','work','Čišćenje','readings','[]'::jsonb,'parts','[]'::jsonb));
+ b:=public.visit_bundle(org,v);
+ begin perform public.visit_command(org,v,gen_random_uuid(),'submit',(b->>'version')::int,'{}');raise exception 'pending photo submitted';exception when invalid_parameter_value then null;end;
+ verified:=jsonb_build_object('assetId','fictional-asset','version',1,'bytes',67,'format','png','width',1,'height',1,'expires',exp);
+ -- The test fixture's private key is passed through transaction-local state only.
+ signature:=encode(extensions.hmac(concat_ws(E'\n',org,v,a,'a1000000-0000-4000-8000-000000000102','fictional-asset',1,67,'png',1,1,exp),current_setting('hvac_test.verifier'),'sha256'),'hex');
+ verified:=verified||jsonb_build_object('proof',signature);
+ perform public.attachment_command(org,v,a,'complete',verified);
+ perform public.attachment_command(org,v,a,'complete',verified);
+ if public.attachment_read(org,v,a)->0->>'state'<>'verified' then raise exception 'verification lost'; end if;
+ if (public.attachment_read(org,v,a)->0->>'verified_bytes')::int<>67 then raise exception 'normalized size lost';end if;
+ begin perform public.attachment_command(org,v,a,'complete',verified||'{"bytes":69}');raise exception 'tampered proof accepted';exception when insufficient_privilege then null;end;
+ perform set_config('request.jwt.claim.sub','a1000000-0000-4000-8000-000000000103',true);
+ begin perform public.attachment_read(org,v,a);raise exception 'cross organization read';exception when insufficient_privilege then null;end;
+ begin perform public.attachment_command(org,v,a,'reserve',p);raise exception 'cross organization upload';exception when insufficient_privilege then null;end;
+ perform set_config('request.jwt.claim.sub','a1000000-0000-4000-8000-000000000104',true);
+ begin perform public.attachment_read(org,v,a);raise exception 'unassigned read';exception when insufficient_privilege then null;end;
+ begin perform public.attachment_command(org,v,a,'reserve',p);raise exception 'unassigned upload';exception when insufficient_privilege then null;end;
+ perform set_config('request.jwt.claim.sub','a1000000-0000-4000-8000-000000000102',true);
+ perform public.attachment_command(org,v,a,'remove','{}');
+ perform public.attachment_command(org,v,a,'remove','{}');
+ if public.attachment_read(org,v,a)->0->>'state'<>'removed' then raise exception 'not removed';end if;
+ begin perform public.attachment_command(org,v,a,'complete',verified);raise exception 'removed revived';exception when invalid_parameter_value then null;end;
+end $$;
+reset role;
+update public.memberships set active=false where user_id='a1000000-0000-4000-8000-000000000102';
+set local role authenticated;
+select set_config('request.jwt.claim.sub','a1000000-0000-4000-8000-000000000102',true);
+do $$ begin
+ begin perform public.attachment_read('a1000000-0000-4000-8000-000000000001','e1000000-0000-4000-8000-000000000004');raise exception 'revoked read';exception when insufficient_privilege then null;end;
+ begin perform public.attachment_command('a1000000-0000-4000-8000-000000000001','e1000000-0000-4000-8000-000000000004','e1000000-0000-4000-8000-000000000010','reserve','{}');raise exception 'revoked upload';exception when insufficient_privilege then null;end;
+end $$;
+reset role;

@@ -84,6 +84,31 @@ export async function createVerificationFixture() {
           [id],
         );
         const ids = rows.map((row) => row.organization_id);
+        for (const table of ["report_issue_receipts", "render_jobs"])
+          await db.query(
+            `delete from hvac_private.${table} where organization_id=any($1::uuid[])`,
+            [ids],
+          );
+        await db.query(
+          "delete from public.report_revisions where organization_id=any($1::uuid[])",
+          [ids],
+        );
+        await db.query(
+          "delete from hvac_private.report_counters where organization_id=any($1::uuid[])",
+          [ids],
+        );
+        await db.query(
+          "delete from public.attachments where organization_id=any($1::uuid[])",
+          [ids],
+        );
+        await db.query(
+          "delete from hvac_private.visit_corrections where organization_id=any($1::uuid[])",
+          [ids],
+        );
+        await db.query(
+          "delete from public.follow_ups where organization_id=any($1::uuid[])",
+          [ids],
+        );
         await db.query(
           "delete from public.visit_items where organization_id=any($1::uuid[])",
           [ids],

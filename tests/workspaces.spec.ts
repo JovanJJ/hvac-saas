@@ -227,6 +227,16 @@ test("direct API retries, cross-tenant denial and simultaneous owner demotion", 
     expect(created.every((result) => !result.error)).toBe(true);
     const target = created[0].data;
     expect(created[1].data).toBe(target);
+    const settings = {
+      p_organization_id: target,
+      p_name: "API concurrency test",
+      p_time_zone: "Europe/Belgrade",
+      p_version: 1,
+    };
+    expect((await a.rpc("update_workspace", settings)).error).toBeNull();
+    expect((await a.rpc("update_workspace", settings)).error?.code).toBe(
+      "PT409",
+    );
     const denied = await b.rpc("workspace_roster", {
       p_organization_id: target,
     });

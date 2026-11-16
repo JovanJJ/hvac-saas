@@ -44,7 +44,7 @@ begin
   begin
     perform public.update_workspace_member(target,member_id,'owner',true,member_version);
     raise exception 'Stale version accepted';
-  exception when serialization_failure then null; end;
+  exception when sqlstate 'PT409' then null; end;
   perform set_config('request.jwt.claim.sub','a1000000-0000-4000-8000-000000000104',true);
   if (select count(*) from public.workspace_roster(target))<>2 then raise exception 'Coordinator cannot read active roster'; end if;
   begin

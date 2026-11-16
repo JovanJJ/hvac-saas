@@ -1,11 +1,15 @@
 import Link from "next/link";
 import { StaffPage } from "@/features/workspaces/staff-shell";
+import { ReviewQueue } from "@/features/visits/pages";
+import { RecentReports } from "@/features/reports/pages";
 export default function OfficePage() {
   return (
     <StaffPage path="/office" roles={["owner", "coordinator"]}>
       {(context) => (
         <>
           <h1>Kancelarija</h1>
+          <ReviewQueue />
+          <RecentReports />
           <Link href="/customers" className="button secondary">
             Dodaj klijenta
           </Link>

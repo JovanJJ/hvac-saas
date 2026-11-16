@@ -39,6 +39,12 @@ export const resetPasswordSchema = z
 export function safeDestination(value: unknown) {
   if (typeof value !== "string") return "/account";
   if (
+    /^\/office\/reports\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+      value,
+    )
+  )
+    return value;
+  if (
     [
       "/account",
       "/reset-password",
@@ -53,6 +59,12 @@ export function safeDestination(value: unknown) {
       "/settings/team",
       "/settings/workspace",
     ].includes(value)
+  )
+    return value;
+  if (
+    /^\/visits\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}(?:\/(?:review|preview))?$/i.test(
+      value,
+    )
   )
     return value;
   return /^\/invite\/[A-Za-z0-9_-]{43}$/.test(value) ? value : "/account";

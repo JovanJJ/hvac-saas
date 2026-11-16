@@ -1,4 +1,4 @@
-// Initial M1a database contract, matching 202611160001_identity_foundation.sql.
+// Runtime identity tables and scoped business RPC contract.
 // Regenerate/extend alongside migrations as the application schema grows.
 export type StaffRole = "owner" | "coordinator" | "technician";
 type Organization = {
@@ -45,6 +45,61 @@ export type Database = {
     };
     Views: Record<string, never>;
     Functions: {
+      report_preview: {
+        Args: { p_organization_id: string; p_visit_id: string };
+        Returns: unknown;
+      };
+      issue_report: {
+        Args: {
+          p_organization_id: string;
+          p_visit_id: string;
+          p_operation_id: string;
+          p_version: number;
+        };
+        Returns: string;
+      };
+      report_revision: {
+        Args: { p_organization_id: string; p_revision_id: string };
+        Returns: unknown;
+      };
+      report_list: { Args: { p_organization_id: string }; Returns: unknown };
+      attachment_read: {
+        Args: {
+          p_organization_id: string;
+          p_visit_id: string;
+          p_attachment_id?: string;
+        };
+        Returns: unknown;
+      };
+      attachment_command: {
+        Args: {
+          p_organization_id: string;
+          p_visit_id: string;
+          p_attachment_id: string;
+          p_kind: string;
+          p_data: unknown;
+        };
+        Returns: string;
+      };
+      visit_bundle: {
+        Args: { p_organization_id: string; p_visit_id: string };
+        Returns: unknown;
+      };
+      visit_review_queue: {
+        Args: { p_organization_id: string };
+        Returns: unknown;
+      };
+      visit_command: {
+        Args: {
+          p_organization_id: string;
+          p_visit_id: string;
+          p_operation_id: string;
+          p_kind: string;
+          p_version: number;
+          p_data: unknown;
+        };
+        Returns: string;
+      };
       save_operation: {
         Args: {
           p_organization_id: string;
