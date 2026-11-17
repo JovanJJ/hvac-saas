@@ -4,6 +4,7 @@ export function PhotoGallery({
   visitId,
   photos,
   customerOnly = false,
+  sources,
 }: {
   visitId: string;
   photos: {
@@ -13,6 +14,7 @@ export function PhotoGallery({
     height?: number | null;
   }[];
   customerOnly?: boolean;
+  sources?: Record<string, string>;
 }) {
   return (
     <div className="my-4 grid gap-4 sm:grid-cols-2">
@@ -22,7 +24,9 @@ export function PhotoGallery({
           className="break-inside-avoid rounded border p-3"
         >
           <img
-            src={photoUrl(visitId, photo.id, customerOnly)}
+            src={
+              sources?.[photo.id] ?? photoUrl(visitId, photo.id, customerOnly)
+            }
             alt={photo.caption}
             loading="lazy"
             width={photo.width ?? 640}

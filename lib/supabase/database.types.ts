@@ -45,6 +45,69 @@ export type Database = {
     };
     Views: Record<string, never>;
     Functions: {
+      acknowledge_report: {
+        Args: {
+          p_token: string;
+          p_name: string;
+          p_role: string;
+          p_acknowledged: boolean;
+        };
+        Returns: unknown;
+      };
+      report_receipts: {
+        Args: { p_organization_id: string; p_revision_id: string };
+        Returns: unknown;
+      };
+      create_report_link: {
+        Args: {
+          p_organization_id: string;
+          p_revision_id: string;
+          p_operation_id: string;
+          p_token_hash: string;
+          p_ttl_days: number;
+        };
+        Returns: unknown;
+      };
+      revoke_report_link: {
+        Args: { p_organization_id: string; p_link_id: string };
+        Returns: undefined;
+      };
+      report_links: {
+        Args: { p_organization_id: string; p_revision_id: string };
+        Returns: unknown;
+      };
+      guest_report: { Args: { p_token: string }; Returns: unknown };
+      pdf_claim: { Args: { p_revision_id?: string }; Returns: unknown };
+      pdf_heartbeat: {
+        Args: { p_job_id: string; p_lease_token: string };
+        Returns: undefined;
+      };
+      pdf_manifest: {
+        Args: {
+          p_job_id: string;
+          p_lease_token: string;
+          p_sha256: string;
+          p_size: number;
+          p_renderer: string;
+        };
+        Returns: undefined;
+      };
+      pdf_complete: {
+        Args: { p_job_id: string; p_lease_token: string; p_sha256: string };
+        Returns: undefined;
+      };
+      pdf_fail: {
+        Args: { p_job_id: string; p_lease_token: string; p_error: string };
+        Returns: undefined;
+      };
+      retry_report: {
+        Args: {
+          p_organization_id: string;
+          p_revision_id: string;
+          p_operation_id: string;
+        };
+        Returns: undefined;
+      };
       report_preview: {
         Args: { p_organization_id: string; p_visit_id: string };
         Returns: unknown;

@@ -66,13 +66,18 @@ export type ReportPreview = {
   revisionId: string | null;
   data: CustomerReport;
 };
+export type RenderState = "queued" | "rendering" | "ready" | "failed";
 export type ReportRevision = {
   id: string;
   visitId: string;
   issuedBy: string;
   issuedAt: string;
   revision: number;
-  renderState: "queued";
+  renderState: RenderState;
+  attempts: number;
+  availableAt: string;
+  lastError: string | null;
+  artifact: { path: string; sha256: string; size: number; createdAt: string } | null;
   data: CustomerReport;
 };
 export type ReportListEntry = {
@@ -80,5 +85,5 @@ export type ReportListEntry = {
   number: string;
   site: string;
   issuedAt: string;
-  renderState: "queued";
+  renderState: RenderState;
 };

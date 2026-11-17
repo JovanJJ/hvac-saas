@@ -76,7 +76,7 @@ test("office issues one immutable four-system revision with a queued PDF at both
       name: "Izdat servisni izveštaj",
     });
     await expect(
-      page.getByRole("status").filter({ hasText: "PDF čeka izradu" }),
+      page.getByRole("status").filter({ hasText: "Čeka izradu PDF-a" }),
     ).toBeVisible();
     await expect(report.getByRole("definition")).toHaveText(["4", "3", "2"]);
     await expect(

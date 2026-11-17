@@ -1,0 +1,138 @@
+@media print {
+  @page {
+    size: A4;
+    margin: 14mm 16mm 24mm;
+  }
+  html,
+  body {
+    margin: 0;
+    padding: 0;
+    background: white;
+    color: #172c27;
+    font-family: TerenSans, sans-serif;
+    font-size: 10pt;
+    line-height: 1.45;
+  }
+  * {
+    box-sizing: border-box;
+  }
+  .report {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    overflow-wrap: anywhere;
+  }
+  .report header {
+    padding-bottom: 8pt;
+    margin-bottom: 10pt;
+  }
+  .report header p {
+    margin: 3pt 0;
+  }
+  .report h2 {
+    font-size: 13pt;
+    line-height: 1.3;
+    margin: 0 0 5pt;
+  }
+  .report p {
+    margin: 4pt 0;
+    orphans: 3;
+    widows: 3;
+  }
+  .report .eyebrow {
+    text-transform: uppercase;
+    letter-spacing: 1pt;
+    font-weight: bold;
+    font-size: 9pt;
+  }
+  .report .totals {
+    display: flex;
+    border: 1px solid #aebcb5;
+    margin: 10pt 0;
+    border-radius: 3pt;
+    break-inside: avoid;
+  }
+  .report .totals > div {
+    flex: 1;
+    padding: 6pt;
+    border-right: 1px solid #aebcb5;
+  }
+  .report .totals > div:last-child {
+    border: 0;
+  }
+  .report dt {
+    font-size: 8pt;
+  }
+  .report dd {
+    font-size: 16pt;
+    font-weight: bold;
+    margin: 0;
+  }
+  .report .card {
+    border: 1px solid #b6c2bd;
+    border-radius: 3pt;
+    padding: 8pt 10pt;
+    margin: 8pt 0;
+    break-inside: avoid;
+  }
+  .report .card p {
+    margin: 3pt 0;
+  }
+  .report table {
+    border-collapse: collapse;
+    width: 100%;
+    table-layout: fixed;
+    margin: 8pt 0 12pt;
+    font-size: 8pt;
+  }
+  .report thead {
+    display: table-header-group;
+  }
+  .report tr {
+    break-inside: avoid;
+  }
+  .report th,
+  .report td {
+    text-align: left;
+    padding: 4pt;
+    border: 1px solid #b6c2bd;
+    vertical-align: top;
+    overflow-wrap: anywhere;
+  }
+  .report th {
+    background: #eef2ef;
+  }
+  .report .report-system {
+    break-inside: avoid;
+    margin-bottom: 10pt;
+  }
+  .report .report-system .card {
+    margin-bottom: 3pt;
+  }
+  .report .report-photos {
+    break-before: page;
+  }
+  .report .report-photos figure {
+    margin: 12pt 0;
+    padding: 8pt;
+    border: 1px solid #b6c2bd;
+    break-inside: avoid;
+  }
+  .report .report-photos img {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-height: 68mm;
+    object-fit: contain;
+  }
+  .report .report-photos figcaption {
+    font-size: 9pt;
+    padding-top: 4pt;
+  }
+  .report .report-confirmation {
+    margin-top: 10pt;
+    break-inside: avoid;
+  }
+}

@@ -50,3 +50,29 @@ export async function issueReport(
     revalidatePath(path);
   redirect(`/office/reports/${data}`);
 }
+
+export async function retryReport(
+  _state: IssueState,
+  form: FormData,
+): Promise<IssueState> {
+  const context = await requireWorkspace(["owner", "coordinator"]);
+  const input = z
+    .object({ revisionId: z.string().uuid(), operationId: z.string().uuid() })
+    .safeParse(Object.fromEntries(form));
+  if (!input.success)
+    return { message: "Proverite zahtev i pokušajte ponovo." };
+  const client = await createSupabaseServerClient();
+  const { error } = await client.rpc("retry_report", {
+    p_organization_id: context.workspace.organization.id,
+    p_revision_id: input.data.revisionId,
+    p_operation_id: input.data.operationId,
+  });
+  if (error)
+    return {
+      message:
+        "Nije moguće ponoviti izradu. Osvežite stranicu i proverite stanje izveštaja.",
+    };
+  revalidatePath(`/office/reports/${input.data.revisionId}`);
+  revalidatePath("/office");
+  return {};
+}

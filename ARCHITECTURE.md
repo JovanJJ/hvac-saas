@@ -34,7 +34,7 @@ By default, separate Compose projects create separate networks. Attach the requi
 
 The optional development mail override is [deploy/supabase-mail.local.yml](deploy/supabase-mail.local.yml). `npm run mail:start` starts the missing local inbox and configures Auth SMTP/redirects without changing database services or disabling confirmation. Its web inbox is bound to localhost port 9000. Keep this separate from production SMTP configuration; see [README.md](README.md).
 
-M3b stores immutable customer snapshots and a durable, uniquely keyed PDF queue row in one database transaction under the caller's session. Preview and issuance share the SQL allowlist and `features/reports/document.tsx` template. No worker process or PDF artifact is implemented yet: M3c will add the dedicated worker/container, read only frozen snapshots/evidence references, and archive verified bytes in Supabase private Storage. Queued issuance does not enable download or guest sharing and adds no new runtime credential or SQL connection to user requests.
+M3b stores immutable customer snapshots and a durable, uniquely keyed PDF queue row in one database transaction under the caller's session. Preview and issuance share the SQL allowlist and `features/reports/document.tsx` template. M3c provides the dedicated worker/container and private verified PDF archives. Queued issuance does not enable download or guest sharing and adds no new runtime credential or SQL connection to user requests.
 
 ## Configuration ownership
 
@@ -68,3 +68,17 @@ The M1a app image uses Node 22.23.1 with a pinned base-image digest, a lockfile 
 Persist PostgreSQL and storage files or an S3-compatible backing store across container replacement. Back up the database, file objects and recovery configuration off the VPS. Run a restore drill with a private photo and archived PDF. Log request, operation and revision IDs, job attempts, sync conflicts and render failures. Exclude report tokens, credentials, contact details and photo contents from logs.
 
 References: [Next.js self-hosting](https://nextjs.org/docs/app/guides/self-hosting), [Next.js environment variables](https://nextjs.org/docs/app/guides/environment-variables), [Supabase local development](https://supabase.com/docs/guides/local-development/cli/getting-started), [Supabase self-hosting](https://supabase.com/docs/guides/self-hosting/docker), [Compose networking](https://docs.docker.com/compose/how-tos/networking/).
+
+### M3c worker runtime
+
+`Dockerfile.worker` / `compose.worker.yml` run a separate non-root Node/Chromium consumer with pinned dependencies. Its dedicated verified Auth identity has no workspace memberships or SQL/service-role credentials. Cloudinary credentials stay server-side. The worker renders only frozen DTO/evidence references through the shared template, embedding bundled fonts and bounded photo derivatives while blocking browser network requests.
+
+A write-once digest/size/renderer manifest precedes upload to a fixed private path. Recovery verifies and completes an existing object instead of overwriting bytes. Storage administration remains tooling-only via the guarded local Docker owner connection or an explicit admin URL. Test cleanup uses a separate operator client; neither helper enters runtime. See README for setup, container networking, shutdown and verification.
+
+### M3d guest boundary
+
+Guest routes use only the public Supabase client key and the raw per-request capability. They never reuse staff cookies or worker credentials. PostgreSQL hashes the token and authorizes the exact ready revision; private Storage repeats that authorization from a request header, allowing file GET only. The app proxies digest-verified PDF bytes and approved, bounded photo derivatives with no-store/no-referrer/noindex responses and rechecks permission after upstream fetches. No signed file URLs or elevated runtime credentials are needed. The installed Storage logger's header allowlist excludes the capability header; keep reverse-proxy and monitoring redaction aligned when deploying/upgrading. M3e adds explicit revision/link-bound receipts through the same capability boundary, without additional runtime credentials.
+
+### M3e receipt boundary
+
+The guest receipt endpoint uses the existing anonymous capability client and an append-only database command. It adds no privileged key, SQL connection, background job or notification. Receipt identity, consent version, exact link/revision and time are durable, while the original PDF stays immutable. Office receipt reads use the staff session and active organization authorization. Keep guest POST bodies and token-bearing paths out of request/APM logs; the request stores only the recipient fields needed for the operational receipt, with no fingerprint/IP collection.

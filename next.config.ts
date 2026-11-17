@@ -17,6 +17,7 @@ export default function nextConfig(phase: string): NextConfig {
         ignore: [
           /\/auth\/(confirm|callback)/,
           /\/invite\//,
+          /\/r\//,
           /\/(sign-in|sign-up)/,
         ],
       },
