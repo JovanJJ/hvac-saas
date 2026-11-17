@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import "@/features/reports/print.css";
 
 export const metadata: Metadata = {
   title: "Teren — HVAC servis",

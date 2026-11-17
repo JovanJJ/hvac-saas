@@ -18,18 +18,26 @@
     "test:visit-api": "node scripts/test-visit-api.mjs",
     "evidence:configure": "node scripts/configure-evidence.mjs",
     "mail:start": "node scripts/start-local-mail.mjs",
-    "test:signup": "TEST_LOCAL_MAIL=true playwright test tests/signup-mail.spec.ts"
+    "test:signup": "TEST_LOCAL_MAIL=true playwright test tests/signup-mail.spec.ts",
+    "worker:configure": "node scripts/configure-report-worker.mjs",
+    "worker:reports": "tsx --env-file=.env src/worker/main.ts",
+    "test:worker-container": "tsx --env-file=.env scripts/test-report-worker-container.ts"
   },
   "dependencies": {
     "@next/env": "16.4.6",
+    "@pdf-lib/fontkit": "1.1.1",
     "@supabase/ssr": "0.12.7",
     "@supabase/supabase-js": "2.119.0",
     "cloudinary": "2.10.0",
     "next": "16.4.6",
+    "pdf-lib": "1.17.1",
     "pg": "8.23.1",
+    "playwright-core": "1.65.1",
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "server-only": "0.0.1",
+    "sharp": "0.35.5",
+    "tsx": "4.23.15",
     "zod": "4.6.7"
   },
   "devDependencies": {
@@ -42,7 +50,6 @@
     "eslint": "^9",
     "eslint-config-next": "16.4.6",
     "tailwindcss": "4.3.3",
-    "tsx": "4.23.15",
     "typescript": "^5"
   },
   "engines": {

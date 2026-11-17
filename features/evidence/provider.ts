@@ -1,31 +1,12 @@
 import "server-only";
+import { cloudinarySettings } from "@/lib/cloudinary-settings";
 import { v2 as cloudinary } from "cloudinary";
 import { MAX_PHOTO_BYTES, type Attachment } from "./model";
 import type { VerifiedPhoto } from "./proof";
 const env = process.env;
 export const uploadPreset = "hvac_evidence_v1";
 function config() {
-  const url = env.CLOUDINARY_URL ? new URL(env.CLOUDINARY_URL) : null;
-  const cloud_name = env.CLOUDINARY_NAME || url?.hostname;
-  const api_key =
-    env.CLOUDINARY_API_KEY || (url && decodeURIComponent(url.username));
-  const api_secret =
-    env.CLOUDINARY_API_SECRET || (url && decodeURIComponent(url.password));
-  if (
-    !cloud_name ||
-    !api_key ||
-    !api_secret ||
-    !/^[a-z0-9_-]+$/i.test(cloud_name)
-  )
-    throw new Error("evidence_configuration");
-  return {
-    cloud_name,
-    api_key,
-    api_secret,
-    secure: true,
-    signature_algorithm: "sha256" as const,
-    timeout: 20000,
-  };
+  return cloudinarySettings(env);
 }
 export function verifierSecret() {
   if (!/^[a-f0-9]{64}$/.test(env.EVIDENCE_VERIFICATION_SECRET ?? ""))

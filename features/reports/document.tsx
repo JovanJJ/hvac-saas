@@ -79,7 +79,13 @@ export function SystemResult({
   );
 }
 
-export function ReportDocument({ report }: { report: CustomerReport }) {
+export function ReportDocument({
+  report,
+  photoSources,
+}: {
+  report: CustomerReport;
+  photoSources?: Record<string, string>;
+}) {
   return (
     <article
       className="report mx-auto my-6 max-w-[210mm] bg-white p-5 sm:p-10"
@@ -130,32 +136,94 @@ export function ReportDocument({ report }: { report: CustomerReport }) {
         </p>
       </header>
       <ReportTotals counts={report.totals} />
+      <table className="my-5 w-full table-fixed border-collapse text-left text-xs">
+        <caption className="my-3 text-left font-bold">Pregled sistema</caption>
+        <thead>
+          <tr>
+            {["Sistem", "Prostorija", "Ishod", "Sledeća radnja"].map(
+              (label) => (
+                <th key={label} className="break-words border p-2 align-top">
+                  {label}
+                </th>
+              ),
+            )}
+          </tr>
+        </thead>
+        <tbody>
+          {[...report.items]
+            .sort(
+              (a, b) =>
+                Number(
+                  b.outcome === "repair_needed" || b.outcome === "no_access",
+                ) -
+                Number(
+                  a.outcome === "repair_needed" || a.outcome === "no_access",
+                ),
+            )
+            .map((item) => (
+              <tr key={item.code}>
+                <td className="break-words border p-2 align-top">
+                  {item.code}
+                </td>
+                <td className="break-words border p-2 align-top">
+                  {item.room}
+                </td>
+                <td className="break-words border p-2 align-top">
+                  {outcomeLabels[item.outcome]}
+                </td>
+                <td className="break-words border p-2 align-top">
+                  {item.followUp ? actionLabels[item.followUp.kind] : "—"}
+                </td>
+              </tr>
+            ))}
+        </tbody>
+      </table>
       {report.items.map((item) => (
-        <div key={item.code}>
+        <div key={item.code} className="report-system">
           <SystemResult item={item} />
-          <PhotoGallery
-            visitId={report.visitId}
-            photos={item.photos}
-            customerOnly
-          />
           {item.followUp && (
             <p className="mb-5">
               Sledeća radnja: {actionLabels[item.followUp.kind]} ·{" "}
-              {item.followUp.owner} · Rok: {item.followUp.dueDate} ·{" "}
-              {item.followUp.customerAction}
+              {item.followUp.owner} · Rok:{" "}
+              {item.followUp.dueDate || "Nije određen"}
+              {item.followUp.customerAction
+                ? ` · ${item.followUp.customerAction}`
+                : ""}
             </p>
           )}
         </div>
       ))}
-      {report.completedAt && (
-        <p>
-          Predato:{" "}
-          {new Date(report.completedAt).toLocaleString(report.locale, {
-            timeZone: report.timeZone,
-          })}
-        </p>
+      <div className="report-confirmation">
+        {report.completedAt && (
+          <p>
+            Predato:{" "}
+            {new Date(report.completedAt).toLocaleString(report.locale, {
+              timeZone: report.timeZone,
+            })}
+          </p>
+        )}
+        <p>Čeka potvrdu klijenta.</p>
+      </div>
+      {report.items.some((item) => item.photos.length) && (
+        <section className="report-photos">
+          <h2>Fotografije</h2>
+          {report.items
+            .filter((item) => item.photos.length)
+            .map((item) => (
+              <div key={item.code}>
+                <h3>
+                  {item.code} · {item.room}
+                </h3>
+                <PhotoGallery
+                  visitId={report.visitId}
+                  photos={item.photos}
+                  customerOnly
+                  sources={photoSources}
+                />
+              </div>
+            ))}
+        </section>
       )}
-      <p>Čeka potvrdu klijenta.</p>
     </article>
   );
 }

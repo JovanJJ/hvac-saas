@@ -37,3 +37,19 @@ Remove confirmed local operations after server acknowledgement. For conflicting 
 - Validate on a narrow phone, an office desktop, a keyboard-only session, and a real phone going offline and reconnecting. Test both compact single-system and long multi-system visits. Time the actual workflow with pilot users before setting a speed target.
 
 See [BACKEND.md](BACKEND.md) for the sync protocol and [REPORTS.md](REPORTS.md) for exported content. References: [IndexedDB](https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API), [WCAG quick reference](https://www.w3.org/WAI/WCAG22/quickref/).
+
+### M3c archive progress
+
+Office revisions poll while **Čeka izradu PDF-a** or **PDF se izrađuje**, then expose **Preuzmi PDF** only for a ready archive. After bounded failures, **Ponovi izradu PDF-a** retries the same frozen revision. Source edits do not change its preview or archived bytes. The shared report template prints an A4 summary table with repeated headers, short system cards, a bounded photo appendix, embedded Serbian Latin fonts and report/revision/page-number footers.
+
+### M3d office and recipient flow
+
+A ready office revision includes **Link za klijenta**, a duration selector, **Napravi link za klijenta**, one-time **Kopiraj link**, and current link statuses with **Opozovi link**. The UI explains manual delivery and that opening/downloading does not acknowledge receipt. Because raw tokens are not stored, reloading permits creation of a new link rather than recovery of the old URL. Queued/failed reports have no sharing control.
+
+The signed-out `/r/[token]` page contains the customer report, **Preuzmi PDF** and approved photo captions/images, with no staff navigation. M3e adds the optional receipt form after the report. Expired/revoked links show **Link nije dostupan** and require a new link from the service team. Each PDF/photo request rechecks access. Guest content must not enter a future service-worker/offline cache. The same report template retains 4 planned / 3 inspected / 2 open actions at phone and desktop widths. The explicit receipt UX is described below.
+
+### M3e optional receipt
+
+After the report, **Potvrda prijema** identifies the report number/revision and explains the limited meaning of receipt. The recipient enters **Ime i prezime** and **Uloga kod klijenta**, checks an initially unchecked statement and explicitly submits **Potvrdi prijem izveštaja**. Download remains available independently. Pending/error feedback preserves the entered fields; a matching retry cannot duplicate the receipt.
+
+Success and later reload show **Prijem je potvrđen**, name/role, site-local server time and the method, replacing the form. State is keyed to the link, so navigation cannot reuse another link's local result. The office revision shows **Prijem izveštaja**, all its receipts and **Osveži potvrde**. A receipt is a later record outside the frozen report/PDF, and does not close actions or mark billing/repair approval. Revoked/expired links lose both form and result access.

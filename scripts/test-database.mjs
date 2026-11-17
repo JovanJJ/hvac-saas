@@ -26,6 +26,29 @@ await withDatabase(async (db) => {
         ),
       );
       console.log("PASS: " + file);
+      if (file === "report_issuance.sql") {
+        await db.query(
+          await readFile(
+            new URL("../supabase/tests/pdf_worker.sql", import.meta.url),
+            "utf8",
+          ),
+        );
+        console.log("PASS: pdf_worker.sql");
+        await db.query(
+          await readFile(
+            new URL("../supabase/tests/report_links.sql", import.meta.url),
+            "utf8",
+          ),
+        );
+        console.log("PASS: report_links.sql");
+        await db.query(
+          await readFile(
+            new URL("../supabase/tests/report_receipts.sql", import.meta.url),
+            "utf8",
+          ),
+        );
+        console.log("PASS: report_receipts.sql");
+      }
     } finally {
       await db.query("rollback");
     }

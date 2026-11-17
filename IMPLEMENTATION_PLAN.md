@@ -18,7 +18,7 @@ Identity entry points, verified sessions and recovery, the protected account and
 
 ## M3 implementation
 
-M3a–M3b now implement private verified photos and first report issuance: one frozen customer snapshot and a uniquely keyed queued PDF job commit with the issued visit state. Preview and issuance share an allowlisted SQL mapping and HTML template. The next ticket is M3c worker/render/archive/readiness; M3 is not complete until the later PDF, guest, receipt and amendment gates pass. See [DEVELOPMENT_GUIDE.md](DEVELOPMENT_GUIDE.md) for feature tickets.
+M3a–M3e now implement private verified photos and first report issuance: one frozen customer snapshot and a uniquely keyed queued PDF job commit with the issued visit state. Preview and issuance share an allowlisted SQL mapping and HTML template. The dedicated worker now renders frozen DTOs into immutable private PDF archives with leased retries, progress and authorized ready-only staff download. Ready revisions now support manually copied guest links with expiry, revocation and private PDF/photo delivery. Explicit guest receipt is now recorded separately for the exact link/revision and shown to office staff. The next ticket is M3f amendment; M3 is not complete until amendment and action gates pass. See [DEVELOPMENT_GUIDE.md](DEVELOPMENT_GUIDE.md) for feature tickets.
 
 ## Bootstrap target
 

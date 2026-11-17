@@ -1,7 +1,11 @@
 import pg from "pg";
+import { storageMaintenanceClient } from "../scripts/storage-maintenance.mjs";
 import { randomUUID } from "node:crypto";
 
-export async function createReportFixture({ submitted = true } = {}) {
+export async function createReportFixture({
+  submitted = true,
+  systemCount = 4,
+} = {}) {
   const db = new pg.Client({ connectionString: process.env.DATABASE_URL });
   await db.connect();
   const org = "a1000000-0000-4000-8000-000000000001";
@@ -10,7 +14,7 @@ export async function createReportFixture({ submitted = true } = {}) {
   const customerId = randomUUID(),
     siteId = randomUUID(),
     visitId = randomUUID();
-  const systemIds = Array.from({ length: 4 }, () => randomUUID());
+  const systemIds = Array.from({ length: systemCount }, () => randomUUID());
   const entityIds = [customerId, siteId, visitId, ...systemIds];
   const siteName = "Jagodina " + siteId.slice(0, 8);
   async function rpc(actor: string, name: string, values: unknown[]) {
@@ -35,7 +39,34 @@ export async function createReportFixture({ submitted = true } = {}) {
   }
   async function dispose() {
     try {
+      const paths = (
+        await db.query(
+          "select organization_id||'/'||id||'.pdf' as path from public.report_revisions where organization_id=$1 and visit_id=$2",
+          [org, visitId],
+        )
+      ).rows.map((row) => row.path);
+      if (paths.length) {
+        const storage = await storageMaintenanceClient();
+        const { error } = await storage.storage
+          .from("report-pdfs")
+          .remove(paths);
+        if (error) throw new Error("Fixture storage cleanup failed");
+      }
       await db.query("begin");
+      await db.query(
+        "delete from hvac_private.identity_events where subject_id in(select l.id from hvac_private.report_links l join public.report_revisions r on r.id=l.revision_id where r.organization_id=$1 and r.visit_id=$2)",
+        [org, visitId],
+      );
+      for (const table of [
+        "report_receipts",
+        "report_links",
+        "report_artifacts",
+        "report_retry_receipts",
+      ])
+        await db.query(
+          `delete from hvac_private.${table} where revision_id in(select id from public.report_revisions where organization_id=$1 and visit_id=$2)`,
+          [org, visitId],
+        );
       await db.query(
         "delete from hvac_private.report_issue_receipts where organization_id=$1 and visit_id=$2",
         [org, visitId],
@@ -104,9 +135,12 @@ export async function createReportFixture({ submitted = true } = {}) {
     for (const [index, id] of systemIds.entries())
       await create(id, "system", {
         siteId,
-        code: `KL-0${index + 1}`,
-        room: index === 3 ? "Arhiva" : `Prostorija ${index + 1}`,
-        model: "Fiktivni model",
+        code: `KL-${String(index + 1).padStart(2, "0")}`,
+        room:
+          index === 3
+            ? "Arhiva"
+            : `Prostorija ${index + 1} · Čačak, ćošak, šuma, žbun, đak`,
+        model: "Fiktivni model · ČĆŠŽĐ čćšžđ",
         serial: `FIK-${index + 1}`,
       });
     const day = new Date().toLocaleDateString("en-CA", {
@@ -130,10 +164,10 @@ export async function createReportFixture({ submitted = true } = {}) {
         1,
         JSON.stringify({
           itemId: item.id,
-          outcome: ["serviced", "serviced", "repair_needed", "no_access"][
-            index
-          ],
-          work: index < 3 ? "Čišćenje i pregled" : "",
+          outcome:
+            ["serviced", "serviced", "repair_needed", "no_access"][index] ||
+            "serviced",
+          work: index !== 3 ? "Čišćenje i pregled" : "",
           finding: index === 2 ? "Oštećen deflektor" : "",
           noAccessReason: index === 3 ? "Zaključana arhiva" : "",
           internalNote: "SECRET-INTERNAL",
@@ -159,7 +193,7 @@ export async function createReportFixture({ submitted = true } = {}) {
               : [],
           parts: [],
           followUp:
-            index >= 2
+            index === 2 || index === 3
               ? {
                   kind: index === 2 ? "quote" : "revisit",
                   ownerId: member,
