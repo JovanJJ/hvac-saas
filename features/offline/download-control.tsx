@@ -8,7 +8,7 @@ import {
   removeBundle,
   saveBundle,
   verifyIdentity,
-} from "@/public/offline/v1/storage.js";
+} from "@/lib/offline/storage";
 import { installShell, shellReady } from "@/lib/offline/shell";
 import type { OfflineBundle, OfflineIdentity } from "./model";
 export function DownloadControl({
@@ -22,6 +22,7 @@ export function DownloadControl({
 }) {
   const [saved, setSaved] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
+  const [editable, setEditable] = useState(false);
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState("");
   const [failed, setFailed] = useState(false);
@@ -41,6 +42,10 @@ export function DownloadControl({
         if (active) {
           setSaved(bundle?.downloadedAt || null);
           setReady(shell);
+          setEditable(
+            !!bundle &&
+              ["scheduled", "in_progress"].includes(bundle.visit.status),
+          );
         }
       } catch {
         if (active) {
@@ -96,18 +101,27 @@ export function DownloadControl({
         await saveBundle(identity, payload.bundle);
         setSaved(payload.bundle.downloadedAt);
         setReady(true);
+        setEditable(
+          ["scheduled", "in_progress"].includes(payload.bundle.visit.status),
+        );
         setMessage("Poseta je spremna za pregled bez veze.");
       }
     } catch (error) {
       setFailed(true);
       setMessage(
-        error instanceof Error && error.message === "offline_unsupported"
-          ? "Za rad bez veze potreban je podržan pregledač i HTTPS veza (ili localhost)."
-          : remove
-            ? "Uklanjanje nije uspelo. Kopija je zadržana; pokušajte ponovo."
-            : "Preuzimanje nije uspelo. Proverite vezu, slobodnu memoriju i pristup poseti. Offline spremnost nije potvrđena.",
+        error instanceof Error && error.message === "local_work_pending"
+          ? "Poseta ima neposlate nacrte. Sačuvani su na telefonu; otvorite ih pre osvežavanja ili uklanjanja kopije."
+          : error instanceof Error && error.message === "offline_unsupported"
+            ? "Za rad bez veze potreban je podržan pregledač i HTTPS veza (ili localhost)."
+            : remove
+              ? "Uklanjanje nije uspelo. Kopija je zadržana; pokušajte ponovo."
+              : "Preuzimanje nije uspelo. Proverite vezu, slobodnu memoriju i pristup poseti. Offline spremnost nije potvrđena.",
       );
-      if (!remove) setReady(false);
+      if (
+        !remove &&
+        !(error instanceof Error && error.message === "local_work_pending")
+      )
+        setReady(false);
     } finally {
       setPending(false);
     }
@@ -116,7 +130,9 @@ export function DownloadControl({
     <section className="mt-5 space-y-3" aria-label="Dostupnost bez veze">
       <p>
         {ready
-          ? "Dostupno bez veze · samo pregled"
+          ? editable
+            ? "Dostupno bez veze · lokalni unos"
+            : "Dostupno bez veze · samo pregled"
           : saved
             ? "Kopija je sačuvana; offline pristup treba obnoviti."
             : "Nije preuzeto za rad bez veze."}
@@ -151,7 +167,7 @@ export function DownloadControl({
         )}
         {ready && (
           <a
-            href={`/offline/v1/index.html?visit=${visitId}`}
+            href={`/offline/v2/index.html?visit=${visitId}`}
             className="button secondary"
           >
             Otvori preuzetu posetu

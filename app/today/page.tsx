@@ -15,7 +15,7 @@ async function TodayContent() {
         organizationId={context.workspace.organization.id}
       />
       <p>
-        <a href="/offline/v1/index.html">Preuzete posete na ovom telefonu</a>
+        <a href="/offline/v2/index.html">Preuzete posete na ovom telefonu</a>
       </p>
       <VisitList
         offlineScope={{

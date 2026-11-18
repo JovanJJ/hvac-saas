@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { resolve } from "node:path";
 import { PHASE_DEVELOPMENT_SERVER } from "next/constants";
 
 export default function nextConfig(phase: string): NextConfig {
@@ -55,6 +56,20 @@ export default function nextConfig(phase: string): NextConfig {
     },
     cacheComponents: true,
     partialPrefetching: true,
+    webpack(config, { dev }) {
+      if (!dev) {
+        config.resolve.alias = {
+          ...config.resolve.alias,
+          "@/features/visit-preview/visit-preview": resolve(
+            "features/visit-preview/unavailable.tsx",
+          ),
+          [resolve("features/visit-preview/visit-preview.tsx")]: resolve(
+            "features/visit-preview/unavailable.tsx",
+          ),
+        };
+      }
+      return config;
+    },
     turbopack: {
       // Exclude the fixture and its client graph from production output.
       resolveAlias: previewAlias,

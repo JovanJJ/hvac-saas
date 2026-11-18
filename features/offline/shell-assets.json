@@ -1,10 +1,13 @@
 {
-  "version": 1,
+  "version": 2,
+  "entry": "/offline/v2/index.html",
   "files": [
+    "/offline/v2/index.html",
+    "/offline/v2/app.js",
+    "/offline/v2/storage.js",
+    "/offline/v2/styles.css",
     "/offline/v1/index.html",
-    "/offline/v1/app.js",
     "/offline/v1/storage.js",
-    "/offline/v1/styles.css",
     "/offline/v1/icon.svg",
     "/offline/v1/icon-192.png",
     "/offline/v1/icon-512.png"

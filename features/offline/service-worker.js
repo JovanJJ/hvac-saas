@@ -67,7 +67,7 @@ self.addEventListener("fetch", (event) => {
         async function offlineResponse() {
           const cache = await caches.open(CACHE);
           return (
-            (await cache.match("/offline/v1/index.html")) ||
+            (await cache.match("__SHELL_ENTRY__")) ||
             new Response(
               "Offline prikaz nije dostupan. Povežite se i ponovo preuzmite posetu.",
               {

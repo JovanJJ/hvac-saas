@@ -5,7 +5,7 @@ import {
   lockIdentity,
   notifyChange,
   verifyIdentity,
-} from "@/public/offline/v1/storage.js";
+} from "@/lib/offline/storage";
 export function OfflineSessionGuard() {
   useEffect(() => {
     let previous = currentEpoch();

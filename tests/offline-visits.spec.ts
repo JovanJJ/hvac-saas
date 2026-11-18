@@ -73,10 +73,10 @@ test("download survives a full browser restart offline; missing visits, removal 
       }
       return result;
     });
-    expect(cache).toHaveLength(7);
+    expect(cache).toHaveLength(9);
     for (const entry of cache) {
-      expect(entry.name).toMatch(/^teren-shell-v1-[a-f0-9]{12}$/);
-      expect(entry.path).toMatch(/^\/offline\/v1\//);
+      expect(entry.name).toMatch(/^teren-shell-v2-[a-f0-9]{12}$/);
+      expect(entry.path).toMatch(/^\/offline\/v[12]\//);
       expect(entry.body).not.toContain(fixture.siteName);
       expect(entry.body).not.toContain("SECRET-INTERNAL");
     }
@@ -262,6 +262,7 @@ test("workspace and account changes isolate downloaded data; denied and withdraw
   const orgA = await workspace(orgNameA),
     orgB = await workspace(orgNameB);
   const fixture = await createReportFixture({
+    submitted: false,
     organizationId: orgA,
     ownerId: identity.id,
     technicianId: identity.id,
@@ -297,12 +298,17 @@ test("workspace and account changes isolate downloaded data; denied and withdraw
       .getByRole("button", { name: "Preuzmi za rad bez veze", exact: true })
       .click();
     await expect(
-      card.getByText("Dostupno bez veze · samo pregled", { exact: true }),
+      card.getByText("Dostupno bez veze · lokalni unos", { exact: true }),
     ).toBeVisible();
     await oldTab.goto(`/offline/v1/index.html?visit=${fixture.visitId}`);
     await expect(
       oldTab.getByRole("heading", { name: fixture.siteName, exact: true }),
     ).toBeVisible();
+    const editor = oldTab.getByRole("region", { name: /^Unos / }).first();
+    await editor.getByLabel("Nalaz", { exact: true }).fill("Workspace A draft");
+    await expect(editor.getByRole("status")).toHaveText(
+      "Sačuvano na telefonu · nije poslato.",
+    );
     await page
       .getByRole("combobox", { name: "Radni prostor", exact: true })
       .selectOption(orgB);
@@ -333,8 +339,15 @@ test("workspace and account changes isolate downloaded data; denied and withdraw
     await expect(page.getByText(orgNameA, { exact: true })).toBeVisible();
     await page.goto("/today");
     await expect(
-      card.getByText("Dostupno bez veze · samo pregled", { exact: true }),
+      card.getByText("Dostupno bez veze · lokalni unos", { exact: true }),
     ).toBeVisible();
+    await oldTab.reload();
+    await expect(
+      oldTab
+        .getByRole("region", { name: /^Unos / })
+        .first()
+        .getByLabel("Nalaz", { exact: true }),
+    ).toHaveValue("Workspace A draft");
     const capturedBundle = (await localBundles(page))[0];
     const olderInventory = await (
       await page.request.get("/api/field/offline-context")

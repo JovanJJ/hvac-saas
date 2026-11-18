@@ -70,3 +70,44 @@ dd {
 dt {
   font-size: 0.9rem;
 }
+
+.field {
+  margin: 1rem 0;
+}
+.field label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.4rem;
+}
+input,
+textarea,
+select {
+  width: 100%;
+  min-height: 48px;
+  border: 1px solid #b9c8bc;
+  border-radius: 6px;
+  padding: 0.7rem;
+  background: white;
+  color: #172c27;
+  font: inherit;
+}
+textarea {
+  resize: vertical;
+}
+fieldset {
+  min-width: 0;
+  border: 0;
+  padding: 0;
+  margin: 1rem 0;
+}
+legend {
+  font-weight: bold;
+}
+.line-item {
+  padding: 0.8rem;
+  border: 1px solid #dce4df;
+  border-radius: 8px;
+}
+fieldset:disabled {
+  opacity: 0.75;
+}

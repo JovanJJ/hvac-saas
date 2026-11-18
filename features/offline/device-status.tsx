@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { activeIdentity, changeEvent } from "@/public/offline/v1/storage.js";
+import { activeIdentity, changeEvent } from "@/lib/offline/storage";
 export function OfflineDeviceStatus({
   userId,
   organizationId,

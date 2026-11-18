@@ -48,3 +48,6 @@ next-env.d.ts
 # Generated from public shell assets before dev/build/checks
 /public/sw.js
 /public/offline/shell-version.json
+
+/public/offline/v2/app.js
+/public/offline/v2/storage.js

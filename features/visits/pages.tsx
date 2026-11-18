@@ -1,3 +1,4 @@
+import { DraftBoundary } from "@/features/offline/draft-boundary";
 import Link from "next/link";
 import { returnSource } from "@/features/follow-ups/dal";
 import { randomUUID } from "node:crypto";
@@ -85,7 +86,11 @@ export async function VisitWorkspace({
       )}
       <Totals counts={totals(visit.items)} />
       {!office && editable ? (
-        <>
+        <DraftBoundary
+          userId={context.user.id}
+          organizationId={context.workspace.organization.id}
+          visitId={id}
+        >
           <p>Sačuvajte svaki sistem pre predaje. Rad zahteva internet vezu.</p>
           {visit.items.map((item) => (
             <div key={item.id} id={`system-${item.id}`}>
@@ -135,7 +140,7 @@ export async function VisitWorkspace({
             kind="submit"
             operationId={randomUUID()}
           />
-        </>
+        </DraftBoundary>
       ) : (
         <>
           {visit.items.map((item) => (

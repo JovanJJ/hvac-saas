@@ -8,7 +8,7 @@ export type OfflineIdentity = {
   epoch: string;
 };
 // The read-only wire snapshot preserves nullable incomplete draft fields.
-// Editing forms in M4b must normalize them deliberately instead of inventing saved values.
+// The draft editor normalizes these nullable fields only at its form boundary.
 type CapturedFollowUp = NonNullable<VisitItem["followUp"]>;
 type OfflineItem = Omit<VisitItem, "followUp" | "readings"> & {
   readings: (Omit<VisitItem["readings"][number], "unit"> & {
