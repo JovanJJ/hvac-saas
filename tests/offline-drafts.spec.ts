@@ -64,7 +64,7 @@ test("durable field drafts preserve raw inputs, reject failed writes, freeze que
           };
           request.onsuccess = () => resolve(request.result);
         });
-      const db = await open(3);
+      const db = await open(4);
       const captured = await new Promise<{
         active: unknown;
         bundles: unknown[];

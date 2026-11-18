@@ -54,6 +54,13 @@ await withDatabase(async (db) => {
           ),
         );
         console.log("PASS: field_replay.sql");
+        await db.query(
+          await readFile(
+            new URL("../supabase/tests/photo_replay.sql", import.meta.url),
+            "utf8",
+          ),
+        );
+        console.log("PASS: photo_replay.sql");
       }
       if (file === "report_issuance.sql") {
         await db.query(

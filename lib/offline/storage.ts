@@ -1,3 +1,4 @@
+import { photoPending, type LocalPhoto } from "@/features/offline/photo-model";
 import {
   submissionIssue,
   type Submission,
@@ -15,7 +16,7 @@ import {
 export { toDraftValues };
 export type { DraftValues, FieldDraft };
 const DATABASE = "teren-field";
-const VERSION = 3;
+const VERSION = 4;
 const MARKER = "teren-offline-boundary";
 export const changeEvent = "teren-offline-change";
 type Scope = OfflineIdentity & {
@@ -65,6 +66,13 @@ function openDatabase(): Promise<IDBDatabase> {
         drafts.createIndex("visit", ["userId", "organizationId", "visitId"]);
         drafts.createIndex("partition", ["userId", "organizationId"]);
       }
+      if (!db.objectStoreNames.contains("photos")) {
+        const photos = db.createObjectStore("photos", {
+          keyPath: ["userId", "organizationId", "visitId", "id"],
+        });
+        photos.createIndex("visit", ["userId", "organizationId", "visitId"]);
+        photos.createIndex("partition", ["userId", "organizationId"]);
+      }
       if (!db.objectStoreNames.contains("submissions")) {
         const submissions = db.createObjectStore("submissions", {
           keyPath: ["userId", "organizationId", "visitId"],
@@ -99,7 +107,7 @@ async function transaction<T>(
   try {
     return await new Promise<T>((resolve, reject) => {
       const tx = db.transaction(
-        ["meta", "bundles", "drafts", "submissions"],
+        ["meta", "bundles", "drafts", "submissions", "photos"],
         mode,
       );
       let result: T,
@@ -142,7 +150,7 @@ function matches(
     scope.epoch === identity.epoch
   );
 }
-function guarded<T>(
+export function guarded<T>(
   identity: OfflineIdentity,
   mode: IDBTransactionMode,
   run: (
@@ -178,13 +186,23 @@ export async function lockIdentity(discard = false) {
     if (!discard) return;
     const drafts = tx.objectStore("drafts").getAll();
     const submissions = tx.objectStore("submissions").getAll();
-    submissions.onsuccess = () => {
+    const photos = tx.objectStore("photos").getAll();
+    photos.onsuccess = () => {
       const protectedVisits = new Set(
         [
           ...(drafts.result as FieldDraft[]),
           ...(submissions.result as Submission[]),
+          ...(photos.result as LocalPhoto[]).filter(photoPending),
         ].map((d) => JSON.stringify([d.userId, d.organizationId, d.visitId])),
       );
+      for (const photo of photos.result as LocalPhoto[])
+        if (!photoPending(photo))
+          tx.objectStore("photos").delete([
+            photo.userId,
+            photo.organizationId,
+            photo.visitId,
+            photo.id,
+          ]);
       const cursor = tx.objectStore("bundles").openCursor();
       cursor.onsuccess = () => {
         const entry = cursor.result;
@@ -311,8 +329,16 @@ export async function saveBundle(
       const submission = tx
         .objectStore("submissions")
         .get([identity.userId, identity.organizationId, bundle.visit.id]);
-      submission.onsuccess = () => {
-        if (pending.result || submission.result)
+      const photos = tx
+        .objectStore("photos")
+        .index("visit")
+        .getAll([identity.userId, identity.organizationId, bundle.visit.id]);
+      photos.onsuccess = () => {
+        if (
+          pending.result ||
+          submission.result ||
+          (photos.result as LocalPhoto[]).some(photoPending)
+        )
           fail(new Error("local_work_pending"));
         else tx.objectStore("bundles").put(bundle);
       };
@@ -331,15 +357,31 @@ export async function removeBundle(identity: OfflineIdentity, visitId: string) {
       const submission = tx
         .objectStore("submissions")
         .get([identity.userId, identity.organizationId, visitId]);
-      submission.onsuccess = () => {
-        if (pending.result || submission.result)
+      const photos = tx
+        .objectStore("photos")
+        .index("visit")
+        .getAll([identity.userId, identity.organizationId, visitId]);
+      photos.onsuccess = () => {
+        if (
+          pending.result ||
+          submission.result ||
+          (photos.result as LocalPhoto[]).some(photoPending)
+        )
           fail(new Error("local_work_pending"));
-        else
+        else {
           tx.objectStore("bundles").delete([
             identity.userId,
             identity.organizationId,
             visitId,
           ]);
+          for (const photo of photos.result as LocalPhoto[])
+            tx.objectStore("photos").delete([
+              identity.userId,
+              identity.organizationId,
+              visitId,
+              photo.id,
+            ]);
+        }
       };
     };
   });
@@ -637,7 +679,8 @@ export async function prepareSync(
     const source = tx.objectStore("bundles").get(key);
     const drafts = tx.objectStore("drafts").index("visit").getAll(key);
     const submission = tx.objectStore("submissions").get(key);
-    submission.onsuccess = () => {
+    const photos = tx.objectStore("photos").index("visit").getAll(key);
+    photos.onsuccess = () => {
       if (!source.result) {
         done([]);
         return;
@@ -683,6 +726,7 @@ export async function prepareSync(
       // Send finalization only after EVERY prerequisite was acknowledged and removed in a prior transaction.
       if (
         !drafts.result.length &&
+        !(photos.result as LocalPhoto[]).some(photoPending) &&
         pending &&
         !(pending.errorStatus && pending.errorStatus < 500)
       ) {

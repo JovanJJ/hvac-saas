@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { ReportTotals, SystemResult } from "@/features/reports/document";
 import { SyncControl } from "./sync-control";
 import { SubmissionControl } from "./submission-control";
+import { LocalPhotoPanel } from "./photo-panel";
 import { DraftEditor } from "./draft-editor";
 import type { OfflineBundle, OfflineIdentity } from "./model";
 import {
@@ -90,17 +91,33 @@ function VisitDetails({
       <ReportTotals counts={counts} />
       {visit.items.map((item) =>
         editable ? (
-          <DraftEditor
-            key={`${item.id}:${item.version}`}
-            identity={identity}
-            bundle={bundle}
-            item={item}
-            draft={drafts.find((d) => d.itemId === item.id)}
-            onPersist={persist}
-          />
+          <div key={item.id}>
+            <DraftEditor
+              key={`${item.id}:${item.version}`}
+              identity={identity}
+              bundle={bundle}
+              item={item}
+              draft={drafts.find((d) => d.itemId === item.id)}
+              onPersist={persist}
+            />
+            <LocalPhotoPanel
+              identity={identity}
+              bundle={bundle}
+              itemId={item.id}
+              code={item.code}
+              editable
+            />
+          </div>
         ) : (
           <section className="card" key={item.id}>
             <SystemResult item={item} />
+            <LocalPhotoPanel
+              identity={identity}
+              bundle={bundle}
+              itemId={item.id}
+              code={item.code}
+              editable={false}
+            />
             {item.followUp && (
               <p>
                 {item.followUp.kind === "quote"
@@ -121,7 +138,10 @@ function VisitDetails({
         <p role="status">Čeka slanje. Podaci još nisu poslati kancelariji.</p>
       )}
       {editable && <SubmissionControl identity={identity} visitId={visit.id} />}
-      <p>Fotografije ({bundle.photoCount}) dostupne su samo uz vezu.</p>
+      <p>
+        Fotografije na serveru: {bundle.photoCount}. Fotografije sa ovog
+        telefona prikazane su uz sistem; ostale zahtevaju vezu.
+      </p>
       {drafts.length ? (
         <p>
           Otvorite nacrte da nastavite rad. Predaja posete zahteva potvrdu

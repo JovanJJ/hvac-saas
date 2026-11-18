@@ -34,7 +34,7 @@ export default function nextConfig(phase: string): NextConfig {
             {
               key: "Content-Security-Policy",
               value:
-                "default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'",
+                "default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self' blob:; object-src 'none'; base-uri 'none'; frame-ancestors 'none'",
             },
           ],
         },

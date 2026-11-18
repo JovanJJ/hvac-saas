@@ -1,3 +1,4 @@
+import { syncPhotos } from "./photo-sync";
 import {
   activeIdentity,
   verifyIdentity,
@@ -24,7 +25,8 @@ export function syncDevice(): Promise<string> {
   return running;
 }
 async function run() {
-  let confirmed = 0;
+  let confirmed = 0,
+    retainedPhotos = false;
   const initial = await activeIdentity();
   if (!initial)
     throw new Error("Povežite se i potvrdite nalog na ekranu Danas.");
@@ -35,12 +37,22 @@ async function run() {
     );
   const bundles = await listBundles(identity);
   for (const bundle of bundles) {
+    let photoPassDone = false;
     // Bound one foreground pass. Further work can be resumed with the same durable operations.
     for (let batch = 0; batch < 20; batch++) {
       if (!same(await activeIdentity(), identity))
         throw new Error("Nalog je promenjen. Slanje je zaustavljeno.");
       const operations = await prepareSync(identity, bundle.visit.id);
-      if (!operations.length) break;
+      if (!operations.length) {
+        if (!photoPassDone) {
+          photoPassDone = true;
+          const photos = await syncPhotos(identity, bundle.visit.id);
+          confirmed += photos.confirmed;
+          retainedPhotos ||= photos.retained;
+          if (photos.confirmed) continue;
+        }
+        break;
+      }
       notifyChange({ kind: "sync-attempt", visitId: bundle.visit.id });
       const controller = new AbortController(),
         timer = setTimeout(() => controller.abort(), 20000);
@@ -116,6 +128,8 @@ async function run() {
         return `Potvrđeno na serveru: ${confirmed}. Preostale operacije su zadržane; proverite greške u poseti.`;
     }
   }
+  if (retainedPhotos)
+    return `Potvrđeno na serveru: ${confirmed}. Fotografije koje čekaju ili imaju grešku su zadržane; predaja ih čeka.`;
   return confirmed
     ? `Potvrđeno na serveru: ${confirmed}.`
     : "Nema spremnih operacija za slanje. Pripremite nacrte i proverite zadržane greške.";

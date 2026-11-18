@@ -278,6 +278,9 @@ test("workspace and account changes isolate downloaded data; denied and withdraw
       [orgA, identity.id],
     )
   ).rows[0].id as string;
+  await context.route("**/api/field/offline-photos/**", (route) =>
+    route.abort(),
+  );
   const oldTab = await context.newPage();
   try {
     await fixture.db.query(
@@ -309,6 +312,38 @@ test("workspace and account changes isolate downloaded data; denied and withdraw
     await expect(editor.getByRole("status")).toHaveText(
       "Sačuvano na telefonu · nije poslato.",
     );
+    const photoPanel = oldTab.getByRole("region", {
+      name: "Fotografije na telefonu KL-01",
+      exact: true,
+    });
+    await photoPanel
+      .getByLabel("Izaberite fotografiju", { exact: true })
+      .setInputFiles({
+        name: "fictional.png",
+        mimeType: "image/png",
+        buffer: Buffer.from(
+          "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aN9sAAAAASUVORK5CYII=",
+          "base64",
+        ),
+      });
+    await photoPanel
+      .getByLabel("Opis fotografije", { exact: true })
+      .fill("Workspace A private blob");
+    await photoPanel
+      .getByLabel("Vidljivost fotografije", { exact: true })
+      .selectOption("internal");
+    await photoPanel
+      .getByRole("button", {
+        name: "Sačuvaj fotografiju na telefonu",
+        exact: true,
+      })
+      .click();
+    await expect(
+      oldTab.getByRole("img", {
+        name: "Workspace A private blob",
+        exact: true,
+      }),
+    ).toBeVisible();
     await page
       .getByRole("combobox", { name: "Radni prostor", exact: true })
       .selectOption(orgB);
@@ -348,6 +383,12 @@ test("workspace and account changes isolate downloaded data; denied and withdraw
         .first()
         .getByLabel("Nalaz", { exact: true }),
     ).toHaveValue("Workspace A draft");
+    await expect(
+      oldTab.getByRole("img", {
+        name: "Workspace A private blob",
+        exact: true,
+      }),
+    ).toBeVisible();
     const capturedBundle = (await localBundles(page))[0];
     const olderInventory = await (
       await page.request.get("/api/field/offline-context")

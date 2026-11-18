@@ -49,6 +49,16 @@ export type Database = {
         Args: { p_organization_id: string };
         Returns: string[];
       };
+      replay_photo_command: {
+        Args: {
+          p_organization_id: string;
+          p_visit_id: string;
+          p_attachment_id: string;
+          p_kind: string;
+          p_data: unknown;
+        };
+        Returns: unknown;
+      };
       replay_field_command: {
         Args: {
           p_organization_id: string;

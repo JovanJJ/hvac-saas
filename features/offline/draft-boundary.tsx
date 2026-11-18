@@ -1,4 +1,6 @@
 "use client";
+import { listPhotos } from "@/lib/offline/photo-storage";
+import { photoPending } from "./photo-model";
 import { useEffect, useState, type ReactNode } from "react";
 import {
   activeIdentity,
@@ -33,7 +35,11 @@ export function DraftBoundary({
         if (mounted) {
           setPending(
             records.length +
-              (identity && (await getSubmission(identity, visitId)) ? 1 : 0),
+              (identity && (await getSubmission(identity, visitId)) ? 1 : 0) +
+              (identity
+                ? (await listPhotos(identity, visitId)).filter(photoPending)
+                    .length
+                : 0),
           );
           setFailed(false);
           setChecking(false);
@@ -59,8 +65,8 @@ export function DraftBoundary({
       {pending > 0 && (
         <section className="card my-5">
           <p role="status">
-            Na telefonu postoje neposlate izmene za {pending} sistema. Unos na
-            serveru je zaustavljen da se ne preskoče nacrti.
+            Na telefonu postoje neposlate izmene, fotografije ili predaja. Unos
+            na serveru je zaustavljen da se ne preskoče nacrti.
           </p>
           <a
             className="button primary"
