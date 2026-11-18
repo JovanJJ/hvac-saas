@@ -38,6 +38,7 @@ export function StaffShell({
           {workspace.role !== "technician" && (
             <>
               <Link href="/office">Kancelarija</Link>
+              <Link href="/office/actions">Sledeće radnje</Link>
               <Link href="/customers">Klijenti</Link>
               <Link href="/sites">Lokacije</Link>
               <Link href="/systems">Sistemi</Link>
@@ -60,7 +61,7 @@ export function StaffShell({
         {children}
       </main>
       <footer className="mt-10 border-t border-[#dce4df] pt-5">
-        <form action={signOut}>
+        <form action={signOut} data-offline-boundary="discard">
           <button className="button secondary" type="submit">
             Odjavi se
           </button>

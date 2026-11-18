@@ -34,12 +34,16 @@ export type ReportItem = Pick<
     owner: string;
     dueDate: string | null;
     customerAction: string;
+    state?: "open" | "completed";
+    completedAt?: string | null;
   } | null;
 };
 // Matches the single database allowlist in hvac_private.customer_report_data.
 export type CustomerReport = {
   schemaVersion: 1;
-  templateVersion: "service-report-v1";
+  actionStateVersion?: 1;
+  templateVersion: "service-report-v1" | "service-report-v2";
+  amendment?: { reason: string; previousRevision: number };
   locale: "sr-Latn-RS";
   branding: { displayName: string; logo: null; accentColor: string };
   company: string;
@@ -68,6 +72,15 @@ export type ReportPreview = {
 };
 export type RenderState = "queued" | "rendering" | "ready" | "failed";
 export type ReportRevision = {
+  latestRevisionId: string;
+  previousRevisionId: string | null;
+  reason: string | null;
+  history: {
+    id: string;
+    revision: number;
+    issuedAt: string;
+    reason: string | null;
+  }[];
   id: string;
   visitId: string;
   issuedBy: string;
@@ -77,10 +90,16 @@ export type ReportRevision = {
   attempts: number;
   availableAt: string;
   lastError: string | null;
-  artifact: { path: string; sha256: string; size: number; createdAt: string } | null;
+  artifact: {
+    path: string;
+    sha256: string;
+    size: number;
+    createdAt: string;
+  } | null;
   data: CustomerReport;
 };
 export type ReportListEntry = {
+  revision: number;
   id: string;
   number: string;
   site: string;

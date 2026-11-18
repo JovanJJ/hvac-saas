@@ -1,4 +1,5 @@
 "use server";
+import { rotateOfflineEpoch } from "@/lib/offline/server";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
@@ -50,6 +51,7 @@ function databaseFailure(error: {
   return fail();
 }
 async function selectOrganization(userId: string, organizationId: string) {
+  await rotateOfflineEpoch();
   (await cookies()).set(workspaceCookie(userId), organizationId, {
     ...authCookieOptions(),
     maxAge: 60 * 60 * 24 * 30,

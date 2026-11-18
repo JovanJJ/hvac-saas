@@ -5,12 +5,15 @@ import { randomUUID } from "node:crypto";
 export async function createReportFixture({
   submitted = true,
   systemCount = 4,
+  organizationId = "a1000000-0000-4000-8000-000000000001",
+  ownerId = "a1000000-0000-4000-8000-000000000101",
+  technicianId = "a1000000-0000-4000-8000-000000000102",
 } = {}) {
   const db = new pg.Client({ connectionString: process.env.DATABASE_URL });
   await db.connect();
-  const org = "a1000000-0000-4000-8000-000000000001";
-  const owner = "a1000000-0000-4000-8000-000000000101";
-  const tech = "a1000000-0000-4000-8000-000000000102";
+  const org = organizationId;
+  const owner = ownerId;
+  const tech = technicianId;
   const customerId = randomUUID(),
     siteId = randomUUID(),
     visitId = randomUUID();
@@ -58,6 +61,9 @@ export async function createReportFixture({
         [org, visitId],
       );
       for (const table of [
+        "report_amendment_receipts",
+        "report_amendments",
+        "report_item_bindings",
         "report_receipts",
         "report_links",
         "report_artifacts",
@@ -83,9 +89,37 @@ export async function createReportFixture({
         "delete from public.report_revisions where organization_id=$1 and visit_id=$2",
         [org, visitId],
       );
+      const returns = (
+        await db.query(
+          "select return_visit_id as id from public.follow_ups where item_id in(select id from public.visit_items where visit_id=$1) and return_visit_id is not null",
+          [visitId],
+        )
+      ).rows.map((r) => r.id);
+      for (const table of ["follow_up_bookings", "follow_up_events"])
+        await db.query(
+          `delete from hvac_private.${table} where action_id in(select id from public.follow_ups where item_id in(select id from public.visit_items where visit_id=$1))`,
+          [visitId],
+        );
+      await db.query(
+        "delete from hvac_private.follow_up_receipts where organization_id=$1 and payload->>'action' in(select id::text from public.follow_ups where item_id in(select id from public.visit_items where visit_id=$2))",
+        [org, visitId],
+      );
       await db.query(
         "delete from public.follow_ups where item_id in(select id from public.visit_items where visit_id=$1)",
         [visitId],
+      );
+      for (const table of ["visit_items", "visit_assignees"])
+        await db.query(
+          `delete from public.${table} where visit_id=any($1::uuid[])`,
+          [returns],
+        );
+      await db.query(
+        "delete from hvac_private.operation_receipts where organization_id=$1 and operation_id=any($2::uuid[])",
+        [org, returns],
+      );
+      await db.query(
+        "delete from public.visits where organization_id=$1 and id=any($2::uuid[])",
+        [org, returns],
       );
       for (const table of ["attachments", "visit_items", "visit_assignees"])
         await db.query(`delete from public.${table} where visit_id=$1`, [

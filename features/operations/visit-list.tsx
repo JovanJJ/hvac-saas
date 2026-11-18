@@ -1,6 +1,13 @@
+import { DownloadControl } from "@/features/offline/download-control";
 import type { ScheduledVisit } from "./types";
 import Link from "next/link";
-export function VisitList({ visits }: { visits: ScheduledVisit[] }) {
+export function VisitList({
+  visits,
+  offlineScope,
+}: {
+  visits: ScheduledVisit[];
+  offlineScope?: { userId: string; organizationId: string };
+}) {
   return (
     <div className="mt-6 grid gap-4">
       {!visits.length && <p>Nema zakazanih poseta.</p>}
@@ -36,7 +43,18 @@ export function VisitList({ visits }: { visits: ScheduledVisit[] }) {
             ))}
           </ul>
           {visit.accessNote && <p>Pristup: {visit.accessNote}</p>}
-          <Link href={`/visits/${visit.id}`} className="button primary mt-4">Otvori posetu</Link>
+          {offlineScope ? (
+            <>
+              <a href={`/visits/${visit.id}`} className="button primary mt-4">
+                Otvori posetu
+              </a>
+              <DownloadControl visitId={visit.id} {...offlineScope} />
+            </>
+          ) : (
+            <Link href={`/visits/${visit.id}`} className="button primary mt-4">
+              Otvori posetu
+            </Link>
+          )}
         </article>
       ))}
     </div>

@@ -113,8 +113,50 @@ async function main() {
       p_revision_id: issued.data,
     });
     assert.equal(second.data.artifact.sha256, first.data.artifact.sha256);
+    const bundle = await owner.rpc("report_amendment", {
+      p_organization_id: fixture.org,
+      p_revision_id: issued.data,
+    });
+    assert.equal(bundle.error, null);
+    const items = structuredClone(bundle.data.items);
+    items[2].finding = "Container amendment · čćšžđ";
+    const amended = await owner.rpc("amend_report", {
+      p_organization_id: fixture.org,
+      p_base_revision_id: issued.data,
+      p_operation_id: randomUUID(),
+      p_version: bundle.data.visitVersion,
+      p_reason: "Container amendment check",
+      p_items: items,
+    });
+    assert.equal(amended.error, null);
+    await execute(
+      "docker",
+      [
+        ...args,
+        "node",
+        "--import",
+        "tsx",
+        "src/worker/main.ts",
+        "--once",
+        "--revision",
+        amended.data,
+      ],
+      { env, timeout: 120000, maxBuffer: 100000 },
+    );
+    const ready = await owner.rpc("report_revision", {
+      p_organization_id: fixture.org,
+      p_revision_id: amended.data,
+    });
+    assert.equal(ready.error, null);
+    assert.equal(ready.data.renderState, "ready");
+    assert.equal(ready.data.data.templateVersion, "service-report-v2");
+    const unchanged = await owner.rpc("report_revision", {
+      p_organization_id: fixture.org,
+      p_revision_id: issued.data,
+    });
+    assert.equal(unchanged.data.artifact.sha256, first.data.artifact.sha256);
     console.log(
-      "PASS: non-root worker container archived one private PDF; second process preserved its digest.",
+      "PASS: non-root worker rendered v1 and amended v2; retries and amendment preserved the original digest.",
     );
   } finally {
     await owner.auth.signOut({ scope: "local" });

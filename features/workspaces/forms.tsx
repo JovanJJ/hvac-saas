@@ -125,6 +125,7 @@ export function WorkspaceSwitcher({
   return (
     <form
       action={action}
+      data-offline-boundary="switch"
       className="flex flex-col gap-3 sm:flex-row sm:items-end"
     >
       <div className="w-full min-w-0 flex-1">

@@ -6,7 +6,8 @@ import { PDFDocument, PDFHexString, rgb } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
 import { ReportDocument } from "@/features/reports/document";
 import type { CustomerReport } from "@/features/reports/model";
-export const rendererVersion = "service-report-v1/chromium-1255/1";
+export const rendererId = (report: CustomerReport) =>
+  `${report.templateVersion}/chromium-1255/${report.actionStateVersion === 1 ? 2 : 1}`;
 export const digest = (bytes: Uint8Array) =>
   createHash("sha256").update(bytes).digest("hex");
 export async function renderReport(
@@ -14,9 +15,14 @@ export async function renderReport(
   sources: Record<string, string> = {},
 ) {
   if (
-    report.templateVersion !== "service-report-v1" ||
-    report.schemaVersion !== 1
+    !["service-report-v1", "service-report-v2"].includes(
+      report.templateVersion,
+    ) ||
+    report.schemaVersion !== 1 ||
+    (report.actionStateVersion !== undefined && report.actionStateVersion !== 1)
   )
+    throw new Error("unsupported_template");
+  if (report.templateVersion === "service-report-v2" && !report.amendment)
     throw new Error("unsupported_template");
   if (!report.issuedAt || !report.revision || report.items.length > 500)
     throw new Error("render_limit");
@@ -86,8 +92,8 @@ export async function renderReport(
   const date = new Date(report.issuedAt);
   pdf.setCreationDate(date);
   pdf.setModificationDate(date);
-  pdf.setProducer(rendererVersion);
-  pdf.setCreator(rendererVersion);
+  pdf.setProducer(rendererId(report));
+  pdf.setCreator(rendererId(report));
   pdf.setTitle(report.reference);
   const id = PDFHexString.of(
     digest(Buffer.from(JSON.stringify(report))).slice(0, 32),

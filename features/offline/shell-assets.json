@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "files": [
+    "/offline/v1/index.html",
+    "/offline/v1/app.js",
+    "/offline/v1/storage.js",
+    "/offline/v1/styles.css",
+    "/offline/v1/icon.svg",
+    "/offline/v1/icon-192.png",
+    "/offline/v1/icon-512.png"
+  ]
+}

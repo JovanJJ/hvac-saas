@@ -121,14 +121,16 @@ export function ItemForm({
             quantity: numeric(`quantity${index}`),
             unit: str(`partUnit${index}`),
           })),
-        followUp: str("followKind")
-          ? {
-              kind: str("followKind"),
-              ownerId: str("ownerId"),
-              dueDate: str("dueDate"),
-              customerAction: str("customerAction"),
-            }
-          : null,
+        followUp: item.followUp?.managedAt
+          ? item.followUp
+          : str("followKind")
+            ? {
+                kind: str("followKind"),
+                ownerId: str("ownerId"),
+                dueDate: str("dueDate"),
+                customerAction: str("customerAction"),
+              }
+            : null,
       };
       const command = new FormData();
       for (const [key, value] of Object.entries({
@@ -266,41 +268,56 @@ export function ItemForm({
       </details>
       <details open={!!item.followUp}>
         <summary>Sledeća radnja</summary>
-        <SelectField
-          label="Vrsta radnje"
-          name="followKind"
-          defaultValue={item.followUp?.kind ?? ""}
-        >
-          <option value="">Bez radnje</option>
-          {Object.entries(actionLabels).map(([value, label]) => (
-            <option key={value} value={value}>
-              {label}
-            </option>
-          ))}
-        </SelectField>
-        <SelectField
-          label="Odgovorni član tima"
-          name="ownerId"
-          defaultValue={item.followUp?.ownerId ?? ""}
-        >
-          <option value="">Izaberite odgovornu osobu</option>
-          {visit.staff.map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.label}
-            </option>
-          ))}
-        </SelectField>
-        <Field
-          label="Rok"
-          name="dueDate"
-          type="date"
-          value={item.followUp?.dueDate ?? ""}
-        />
-        <Note
-          label="Šta se očekuje od klijenta"
-          name="customerAction"
-          value={item.followUp?.customerAction}
-        />
+        {item.followUp?.managedAt && (
+          <p>
+            Kancelarija upravlja ovom radnjom. Stanje:{" "}
+            {item.followUp.state === "completed" ? "Završeno" : "Otvoreno"}.
+          </p>
+        )}
+        <fieldset disabled={!!item.followUp?.managedAt}>
+          <legend>Podaci o radnji</legend>
+          <SelectField
+            label="Vrsta radnje"
+            name="followKind"
+            defaultValue={item.followUp?.kind ?? ""}
+          >
+            <option value="">Bez radnje</option>
+            {Object.entries(actionLabels).map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </SelectField>
+          <SelectField
+            label="Odgovorni član tima"
+            name="ownerId"
+            defaultValue={item.followUp?.ownerId ?? ""}
+          >
+            <option value="">Izaberite odgovornu osobu</option>
+            {item.followUp?.state === "completed" &&
+              !visit.staff.some((s) => s.id === item.followUp!.ownerId) && (
+                <option value={item.followUp.ownerId}>
+                  {item.followUp.ownerLabel || "Raniji član tima"}
+                </option>
+              )}
+            {visit.staff.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.label}
+              </option>
+            ))}
+          </SelectField>
+          <Field
+            label="Rok"
+            name="dueDate"
+            type="date"
+            value={item.followUp?.dueDate ?? ""}
+          />
+          <Note
+            label="Šta se očekuje od klijenta"
+            name="customerAction"
+            value={item.followUp?.customerAction}
+          />
+        </fieldset>
       </details>
       <Note
         label="Interna beleška (ne ulazi u izveštaj)"

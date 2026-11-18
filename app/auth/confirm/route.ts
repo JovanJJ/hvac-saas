@@ -1,3 +1,4 @@
+import { rotateOfflineEpoch } from "@/lib/offline/server";
 import { NextResponse, type NextRequest } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { cookies } from "next/headers";
@@ -21,6 +22,7 @@ export async function GET(request: NextRequest) {
         type,
       });
       if (!error) {
+        await rotateOfflineEpoch();
         path =
           type === "recovery"
             ? "/reset-password"

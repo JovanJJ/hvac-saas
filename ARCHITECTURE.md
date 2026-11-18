@@ -82,3 +82,19 @@ Guest routes use only the public Supabase client key and the raw per-request cap
 ### M3e receipt boundary
 
 The guest receipt endpoint uses the existing anonymous capability client and an append-only database command. It adds no privileged key, SQL connection, background job or notification. Receipt identity, consent version, exact link/revision and time are durable, while the original PDF stays immutable. Office receipt reads use the staff session and active organization authorization. Keep guest POST bodies and token-bearing paths out of request/APM logs; the request stores only the recipient fields needed for the operational receipt, with no fingerprint/IP collection.
+
+### M3f versioned amendment rendering
+
+Amendments are database transactions under the current office session; they do not reopen field writes or add elevated runtime credentials. Stable private item bindings join corrected operational findings to the predecessor's frozen identity/evidence. The existing worker supports v1 and v2 snapshots, with a renderer ID derived from the recorded template version. V2 adds correction reason/predecessor text; v1 output and archived bytes remain independently recoverable. Release the updated worker alongside the app before enabling v2 jobs. The fixed-path/digest protocol is unchanged for each revision.
+
+### M3g action-state rendering compatibility
+
+Office action commands use the same session-scoped Supabase boundary as scheduling; no new elevated runtime key or provider is introduced. New customer DTOs carry `actionStateVersion: 1`; the worker pins their renderer to `chromium-1255/2`, while legacy snapshots retain `chromium-1255/1`. Build/restart the worker alongside this release so new report jobs use the matching mapper/template contract. See [REPORTS.md](REPORTS.md).
+
+### M4a public PWA shell and private working copies
+
+`app/manifest.ts` supplies the install manifest/icons and starts at Today. `scripts/build-offline-shell.mjs` hashes the explicit public asset manifest plus worker template, then generates ignored `public/sw.js` and `public/offline/shell-version.json`. Dev, build, type-check and browser-test hooks prepare those files without additional dependencies or environment variables. Shell readiness checks both the semantic version and content revision, preventing a new release from accepting an older cached shell. Deploy the generated public directory alongside the matching Next standalone build.
+
+The service worker caches only the public files named in `features/offline/shell-assets.json`, under `teren-shell-v<version>-<revision>`. It never caches authenticated HTML, RSC, API responses, Auth, guest reports, PDFs or photos. Native navigation to Today/one field visit uses no-store network reads with a bounded fallback to the data-free shell. A complete new shell installs before prior shell caches are removed; IndexedDB is untouched by shell activation.
+
+The standalone shell uses a small static stylesheet so offline startup is independent of authenticated Next documents and their runtime chunks. Next controls retain the shared app/Tailwind components. Both viewers share the same browser storage implementation. Private visit snapshots and the active user/organization binding live only in IndexedDB; identity epochs and transition markers keep account/workspace changes isolated. See [FRONTEND.md](FRONTEND.md) and [BACKEND.md](BACKEND.md) for the read-only scope. Physical-phone HTTPS/PWA storage and upgrade testing remains the M4f gate.

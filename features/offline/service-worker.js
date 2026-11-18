@@ -1,8 +1,8 @@
 /* Only these public, versioned shell files enter Cache Storage. No private responses or RSC payloads. */
-const SHELL_VERSION = 1;
-const SHELL_REVISION = "09cca31b4481";
+const SHELL_VERSION = __SHELL_VERSION__;
+const SHELL_REVISION = "__SHELL_REVISION__";
 const CACHE = `teren-shell-v${SHELL_VERSION}-${SHELL_REVISION}`;
-const FILES = ["/offline/v1/index.html","/offline/v1/app.js","/offline/v1/storage.js","/offline/v1/styles.css","/offline/v1/icon.svg","/offline/v1/icon-192.png","/offline/v1/icon-512.png"];
+const FILES = __SHELL_FILES__;
 self.addEventListener("install", (event) => {
   event.waitUntil(
     (async () => {
