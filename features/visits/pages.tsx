@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { returnSource } from "@/features/follow-ups/dal";
 import { randomUUID } from "node:crypto";
 import { visitBundle, reviewQueue } from "./dal";
 import { ItemForm, TransitionForm } from "./forms";
@@ -22,6 +23,7 @@ export async function VisitWorkspace({
   office?: boolean;
 }) {
   const { visit, context } = await visitBundle(id, office);
+  const source = await returnSource(context.workspace.organization.id, id);
   const photos = await attachments(context.workspace.organization.id, id);
   const editable =
     visit.status === "scheduled" || visit.status === "in_progress";
@@ -65,12 +67,28 @@ export async function VisitWorkspace({
           Zatražena dopuna: {visit.correctionReason}
         </p>
       )}
+      {source && (
+        <section className="card my-5">
+          <h2>Izvorni nalaz za povratnu posetu · {source.code}</h2>
+          <p>{source.finding || source.noAccessReason || source.work}</p>
+          {source.customerAction && (
+            <p>Potrebno od klijenta: {source.customerAction}</p>
+          )}
+          {context.workspace.role !== "technician" && (
+            <Link
+              href={`/visits/${source.visitId}/review#system-${source.itemId}`}
+            >
+              Otvori izvorni sistem
+            </Link>
+          )}
+        </section>
+      )}
       <Totals counts={totals(visit.items)} />
       {!office && editable ? (
         <>
           <p>Sačuvajte svaki sistem pre predaje. Rad zahteva internet vezu.</p>
           {visit.items.map((item) => (
-            <div key={item.id}>
+            <div key={item.id} id={`system-${item.id}`}>
               <ItemForm
                 key={`${item.id}:${item.version}`}
                 item={item}
@@ -121,8 +139,17 @@ export async function VisitWorkspace({
       ) : (
         <>
           {visit.items.map((item) => (
-            <div key={item.id}>
+            <div key={item.id} id={`system-${item.id}`}>
               <Result item={item} />
+              {item.correctedAt && (
+                <p className="my-3">
+                  Ispravljeno u kancelariji:{" "}
+                  {new Date(item.correctedAt).toLocaleString("sr-Latn-RS", {
+                    timeZone: visit.timeZone,
+                  })}{" "}
+                  · {item.correctedByLabel || "Raniji član tima"}
+                </p>
+              )}
               <PhotoPanel
                 visitId={id}
                 itemId={item.id}
@@ -134,9 +161,22 @@ export async function VisitWorkspace({
                 <p className="card">
                   {actionLabels[item.followUp.kind]} · Odgovoran:{" "}
                   {visit.staff.find((s) => s.id === item.followUp?.ownerId)
-                    ?.label ?? "Nedostaje"}{" "}
+                    ?.label ??
+                    item.followUp.ownerLabel ??
+                    "Nedostaje"}{" "}
                   · Rok: {item.followUp.dueDate || "Nedostaje"} ·{" "}
-                  {item.followUp.customerAction}
+                  {item.followUp.customerAction} ·{" "}
+                  {item.followUp.state === "completed"
+                    ? "Završeno"
+                    : "Otvoreno"}
+                  {office && item.followUp.id && (
+                    <Link
+                      className="button secondary"
+                      href={`/office/actions/${item.followUp.id}`}
+                    >
+                      Otvori radnju
+                    </Link>
+                  )}
                 </p>
               )}
               {office && item.internalNote && (

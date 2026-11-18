@@ -85,6 +85,12 @@ export async function createVerificationFixture() {
         );
         const ids = rows.map((row) => row.organization_id);
         for (const table of [
+          "follow_up_bookings",
+          "follow_up_events",
+          "follow_up_receipts",
+          "report_amendment_receipts",
+          "report_amendments",
+          "report_item_bindings",
           "report_receipts",
           "report_links",
           "report_artifacts",

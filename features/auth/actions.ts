@@ -1,4 +1,5 @@
 "use server";
+import { rotateOfflineEpoch } from "@/lib/offline/server";
 
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
@@ -57,6 +58,7 @@ export async function signIn(
   } catch {
     return { ...serviceFailure, email: input.data.email };
   }
+  await rotateOfflineEpoch();
   revalidatePath("/", "layout");
   const next =
     form.get("next") || (await cookies()).get("teren_auth_next")?.value;
@@ -102,6 +104,7 @@ export async function signUp(
   } catch {
     return serviceFailure;
   }
+  await rotateOfflineEpoch();
   return {
     status: "success",
     message:
@@ -172,6 +175,7 @@ export async function resetPassword(
   } catch {
     return serviceFailure;
   }
+  await rotateOfflineEpoch();
   revalidatePath("/", "layout");
   redirect("/sign-in?message=password-updated");
 }
@@ -184,6 +188,7 @@ export async function signOut(form?: FormData) {
     const supabase = await createSupabaseServerClient({ writable: true });
     await supabase.auth.signOut({ scope: "local" });
   }
+  await rotateOfflineEpoch();
   revalidatePath("/", "layout");
   const next = form?.get("next");
   redirect(

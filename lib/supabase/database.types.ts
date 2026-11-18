@@ -45,6 +45,46 @@ export type Database = {
     };
     Views: Record<string, never>;
     Functions: {
+      offline_assignment_ids: {
+        Args: { p_organization_id: string };
+        Returns: string[];
+      };
+      offline_visit_bundle: {
+        Args: { p_organization_id: string; p_visit_id: string };
+        Returns: unknown;
+      };
+      follow_up_list: { Args: { p_organization_id: string }; Returns: unknown };
+      follow_up_command: {
+        Args: {
+          p_organization_id: string;
+          p_action_id: string;
+          p_operation_id: string;
+          p_version: number;
+          p_kind: string;
+          p_data: unknown;
+        };
+        Returns: string;
+      };
+      return_visit_source: {
+        Args: { p_organization_id: string; p_visit_id: string };
+        Returns: unknown;
+      };
+
+      report_amendment: {
+        Args: { p_organization_id: string; p_revision_id: string };
+        Returns: unknown;
+      };
+      amend_report: {
+        Args: {
+          p_organization_id: string;
+          p_base_revision_id: string;
+          p_operation_id: string;
+          p_version: number;
+          p_reason: string;
+          p_items: unknown;
+        };
+        Returns: string;
+      };
       acknowledge_report: {
         Args: {
           p_token: string;

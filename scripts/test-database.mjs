@@ -26,6 +26,28 @@ await withDatabase(async (db) => {
         ),
       );
       console.log("PASS: " + file);
+      if (file === "visit_handover.sql") {
+        await db.query(
+          await readFile(
+            new URL(
+              "../supabase/tests/follow_up_returned_draft.sql",
+              import.meta.url,
+            ),
+            "utf8",
+          ),
+        );
+        console.log("PASS: follow_up_returned_draft.sql");
+        await db.query(
+          await readFile(
+            new URL(
+              "../supabase/tests/offline_visit_bundle.sql",
+              import.meta.url,
+            ),
+            "utf8",
+          ),
+        );
+        console.log("PASS: offline_visit_bundle.sql");
+      }
       if (file === "report_issuance.sql") {
         await db.query(
           await readFile(
@@ -34,6 +56,29 @@ await withDatabase(async (db) => {
           ),
         );
         console.log("PASS: pdf_worker.sql");
+        await db.query("savepoint follow_up_checks");
+        await db.query(
+          await readFile(
+            new URL(
+              "../supabase/tests/follow_up_operations.sql",
+              import.meta.url,
+            ),
+            "utf8",
+          ),
+        );
+        console.log("PASS: follow_up_operations.sql");
+        await db.query("rollback to savepoint follow_up_checks");
+        await db.query("release savepoint follow_up_checks");
+        await db.query("savepoint amendment_checks");
+        await db.query(
+          await readFile(
+            new URL("../supabase/tests/report_amendments.sql", import.meta.url),
+            "utf8",
+          ),
+        );
+        console.log("PASS: report_amendments.sql");
+        await db.query("rollback to savepoint amendment_checks");
+        await db.query("release savepoint amendment_checks");
         await db.query(
           await readFile(
             new URL("../supabase/tests/report_links.sql", import.meta.url),

@@ -1,7 +1,7 @@
 import type { CustomerReport } from "@/features/reports/model";
 import type { WorkerClient } from "./client";
 import { photoSources } from "./photos";
-import { digest, rendererVersion, renderReport } from "./render";
+import { digest, rendererId, renderReport } from "./render";
 export type Claim = {
   jobId: string;
   organizationId: string;
@@ -67,14 +67,14 @@ export async function processJob(
         job.sha256 &&
         (job.sha256 !== hash ||
           job.size !== bytes.length ||
-          job.rendererVersion !== rendererVersion)
+          job.rendererVersion !== rendererId(job.data))
       )
         throw new Error("artifact_mismatch");
       const { error } = await client.rpc("pdf_manifest", {
         ...lease,
         p_sha256: hash,
         p_size: bytes.length,
-        p_renderer: rendererVersion,
+        p_renderer: rendererId(job.data),
       });
       if (error) throw new Error("artifact_mismatch");
       job.sha256 = hash;

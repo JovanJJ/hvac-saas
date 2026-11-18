@@ -82,15 +82,17 @@ export function SystemResult({
 export function ReportDocument({
   report,
   photoSources,
+  draft = false,
 }: {
   report: CustomerReport;
   photoSources?: Record<string, string>;
+  draft?: boolean;
 }) {
   return (
     <article
       className="report mx-auto my-6 max-w-[210mm] bg-white p-5 sm:p-10"
       aria-label={
-        report.revision
+        report.revision && !draft
           ? "Izdat servisni izveštaj"
           : "Nacrt servisnog izveštaja"
       }
@@ -103,9 +105,17 @@ export function ReportDocument({
         </p>
         <h2>
           Servisni izveštaj
-          {report.revision ? ` · Revizija ${report.revision}` : " · nacrt"}
+          {report.revision
+            ? ` · Revizija ${report.revision}${draft ? " · nacrt" : ""}`
+            : " · nacrt"}
         </h2>
         <p>Poseta: {report.reference}</p>
+        {report.amendment && (
+          <p>
+            Ispravka revizije {report.amendment.previousRevision} · Razlog:{" "}
+            {report.amendment.reason}
+          </p>
+        )}
         <p>
           {report.customer} · {report.site}
         </p>
@@ -172,7 +182,9 @@ export function ReportDocument({
                   {outcomeLabels[item.outcome]}
                 </td>
                 <td className="break-words border p-2 align-top">
-                  {item.followUp ? actionLabels[item.followUp.kind] : "—"}
+                  {item.followUp
+                    ? `${item.followUp.state === "completed" ? "Završeno: " : ""}${actionLabels[item.followUp.kind]}`
+                    : "—"}
                 </td>
               </tr>
             ))}
@@ -183,8 +195,10 @@ export function ReportDocument({
           <SystemResult item={item} />
           {item.followUp && (
             <p className="mb-5">
-              Sledeća radnja: {actionLabels[item.followUp.kind]} ·{" "}
-              {item.followUp.owner} · Rok:{" "}
+              {item.followUp.state === "completed"
+                ? "Završena radnja:"
+                : "Sledeća radnja:"}{" "}
+              {actionLabels[item.followUp.kind]} · {item.followUp.owner} · Rok:{" "}
               {item.followUp.dueDate || "Nije određen"}
               {item.followUp.customerAction
                 ? ` · ${item.followUp.customerAction}`

@@ -44,3 +44,7 @@ next-env.d.ts
 # browser test artifacts
 /test-results/
 /playwright-report/
+
+# Generated from public shell assets before dev/build/checks
+/public/sw.js
+/public/offline/shell-version.json

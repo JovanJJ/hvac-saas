@@ -57,17 +57,19 @@ export async function visitCommand(
   if (error)
     return {
       message:
-        error.code === "PT409"
-          ? "Podaci su promenjeni. Osvežite stranicu i uporedite unos pre ponovnog čuvanja."
-          : error.code === "42501"
-            ? "Pristup poseti više nije dozvoljen."
-            : error.message === "pending_items"
-              ? "Unesite ishod za svaki sistem."
-              : error.message === "pending_attachments"
-                ? "Potvrdite ili uklonite fotografije koje čekaju slanje."
-                : error.message === "missing_follow_up"
-                  ? "Proverite nalaze, odgovorne članove tima i rokove."
-                  : "Proverite unos i stanje posete. Osvežite stranicu ako je poseta već predata.",
+        error.message === "follow_up_managed"
+          ? "Radnjom već upravlja kancelarija. Osvežite stranicu i zadržite njene podatke pri dopuni nalaza."
+          : error.code === "PT409"
+            ? "Podaci su promenjeni. Osvežite stranicu i uporedite unos pre ponovnog čuvanja."
+            : error.code === "42501"
+              ? "Pristup poseti više nije dozvoljen."
+              : error.message === "pending_items"
+                ? "Unesite ishod za svaki sistem."
+                : error.message === "pending_attachments"
+                  ? "Potvrdite ili uklonite fotografije koje čekaju slanje."
+                  : error.message === "missing_follow_up"
+                    ? "Proverite nalaze, odgovorne članove tima i rokove."
+                    : "Proverite unos i stanje posete. Osvežite stranicu ako je poseta već predata.",
     };
   for (const path of [
     `/visits/${visitId}`,

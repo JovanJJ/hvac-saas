@@ -137,7 +137,7 @@ test("office issues one immutable four-system revision with a queued PDF at both
     );
     await page
       .getByRole("link", {
-        name: `${revisions.rows[0].report_number} · ${fixture.siteName}`,
+        name: `${revisions.rows[0].report_number} · ${fixture.siteName} · Revizija 1`,
         exact: true,
       })
       .click();

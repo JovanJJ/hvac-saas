@@ -11,6 +11,34 @@ export default function nextConfig(phase: string): NextConfig {
         };
   return {
     output: "standalone",
+    async headers() {
+      return [
+        {
+          source: "/sw.js",
+          headers: [
+            { key: "Cache-Control", value: "no-store" },
+            { key: "Service-Worker-Allowed", value: "/" },
+            {
+              key: "Content-Type",
+              value: "application/javascript; charset=utf-8",
+            },
+            { key: "X-Content-Type-Options", value: "nosniff" },
+          ],
+        },
+        {
+          source: "/offline/:path*",
+          headers: [
+            { key: "X-Content-Type-Options", value: "nosniff" },
+            { key: "Referrer-Policy", value: "no-referrer" },
+            {
+              key: "Content-Security-Policy",
+              value:
+                "default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'",
+            },
+          ],
+        },
+      ];
+    },
     logging: {
       serverFunctions: false,
       incomingRequests: {

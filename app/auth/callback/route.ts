@@ -1,3 +1,4 @@
+import { rotateOfflineEpoch } from "@/lib/offline/server";
 import { NextResponse, type NextRequest } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { appOrigin } from "@/lib/supabase/config";
@@ -10,8 +11,10 @@ export async function GET(request: NextRequest) {
     try {
       const supabase = await createSupabaseServerClient({ writable: true });
       const { error } = await supabase.auth.exchangeCodeForSession(code);
-      if (!error)
+      if (!error) {
+        await rotateOfflineEpoch();
         path = safeDestination(request.nextUrl.searchParams.get("next"));
+      }
     } catch {
       /* Never echo auth codes or provider errors. */
     }

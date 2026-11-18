@@ -68,7 +68,7 @@ export const itemSchema = z
     },
   );
 export type ItemInput = z.infer<typeof itemSchema>;
-export type VisitItem = Omit<ItemInput, "itemId"> & {
+export type VisitItem = Omit<ItemInput, "itemId" | "followUp"> & {
   id: string;
   version: number;
   planned: boolean;
@@ -79,6 +79,18 @@ export type VisitItem = Omit<ItemInput, "itemId"> & {
   enteredBy: string | null;
   enteredByLabel: string | null;
   enteredAt: string | null;
+  followUp:
+    | (NonNullable<ItemInput["followUp"]> & {
+        id?: string;
+        version?: number;
+        managedAt?: string | null;
+        state?: "open" | "completed";
+        ownerLabel?: string | null;
+        completedAt?: string | null;
+      })
+    | null;
+  correctedAt?: string | null;
+  correctedByLabel?: string | null;
 };
 export type VisitBundle = {
   technicians: string[];
@@ -107,7 +119,8 @@ export function totals(items: VisitItem[]) {
     inspected: items.filter(
       (i) => i.outcome === "serviced" || i.outcome === "repair_needed",
     ).length,
-    actions: items.filter((i) => i.followUp).length,
+    actions: items.filter((i) => i.followUp && i.followUp.state !== "completed")
+      .length,
   };
 }
 export function submissionIssues(items: VisitItem[]) {

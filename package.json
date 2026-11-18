@@ -21,7 +21,12 @@
     "test:signup": "TEST_LOCAL_MAIL=true playwright test tests/signup-mail.spec.ts",
     "worker:configure": "node scripts/configure-report-worker.mjs",
     "worker:reports": "tsx --env-file=.env src/worker/main.ts",
-    "test:worker-container": "tsx --env-file=.env scripts/test-report-worker-container.ts"
+    "test:worker-container": "tsx --env-file=.env scripts/test-report-worker-container.ts",
+    "offline:build": "node scripts/build-offline-shell.mjs",
+    "predev": "npm run offline:build",
+    "prebuild": "npm run offline:build",
+    "pretypecheck": "npm run offline:build",
+    "pretest:e2e": "npm run offline:build"
   },
   "dependencies": {
     "@next/env": "16.4.6",

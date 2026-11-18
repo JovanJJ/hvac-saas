@@ -2,6 +2,7 @@
 import { useActionState, useState } from "react";
 import { FormField } from "@/components/ui/form-field";
 import { SelectField } from "@/components/ui/select-field";
+import { ScheduleFields } from "./schedule-fields";
 import { saveOperation } from "./actions";
 import type { Snapshot } from "./types";
 export function OperationForm({
@@ -43,7 +44,11 @@ export function OperationForm({
             ]
           : [];
   return (
-    <form action={action} className="card space-y-4">
+    <form
+      action={action}
+      onReset={(event) => event.preventDefault()}
+      className="card space-y-4"
+    >
       <input type="hidden" name="operationId" value={operationId} />
       <input type="hidden" name="kind" value={kind} />
       {kind === "site" && (
@@ -105,24 +110,6 @@ export function OperationForm({
             <option value="repair">Popravka</option>
             <option value="installation">Ugradnja</option>
           </SelectField>
-          <FormField
-            name="start"
-            id="start"
-            value={draft.start ?? ""}
-            onChange={(e) => setDraft({ ...draft, start: e.target.value })}
-            label="Početak"
-            type="datetime-local"
-            required
-          />
-          <FormField
-            name="end"
-            id="end"
-            value={draft.end ?? ""}
-            onChange={(e) => setDraft({ ...draft, end: e.target.value })}
-            label="Završetak"
-            type="datetime-local"
-            required
-          />
           <fieldset key={site}>
             <legend>Sistemi za posetu</legend>
             {snapshot.systems
@@ -143,32 +130,11 @@ export function OperationForm({
                 </label>
               ))}
           </fieldset>
-          <fieldset>
-            <legend>Dodeljeni članovi tima</legend>
-            {members
+          <ScheduleFields
+            members={members
               .filter((m) => m.active)
-              .map((m) => (
-                <label
-                  key={m.membership_id}
-                  className="flex items-center gap-3 break-all"
-                >
-                  <input
-                    className="w-5"
-                    type="checkbox"
-                    name="members"
-                    value={m.membership_id}
-                    defaultChecked={checks[m.membership_id] ?? false}
-                    onChange={(e) =>
-                      setChecks({
-                        ...checks,
-                        [m.membership_id]: e.target.checked,
-                      })
-                    }
-                  />
-                  {m.email}
-                </label>
-              ))}
-          </fieldset>
+              .map((m) => ({ id: m.membership_id, label: m.email }))}
+          />
         </>
       )}
       {state.message && (

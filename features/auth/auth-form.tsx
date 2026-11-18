@@ -32,7 +32,12 @@ export function AuthForm({
   );
   const isNewPassword = mode === "sign-up" || mode === "reset-password";
   return (
-    <form action={action} className="space-y-5" noValidate>
+    <form
+      data-offline-boundary={mode === "forgot-password" ? undefined : "discard"}
+      action={action}
+      className="space-y-5"
+      noValidate
+    >
       <input type="hidden" name="next" value={nextPath} />
       {mode !== "reset-password" && (
         <FormField
