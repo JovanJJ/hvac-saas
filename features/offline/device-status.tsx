@@ -1,4 +1,6 @@
 "use client";
+import { RetainedWorkPanel } from "./retained-work";
+import type { OfflineIdentity } from "./model";
 import { SyncControl } from "./sync-control";
 import { useEffect, useState } from "react";
 import { activeIdentity, changeEvent } from "@/lib/offline/storage";
@@ -9,6 +11,7 @@ export function OfflineDeviceStatus({
   userId: string;
   organizationId: string;
 }) {
+  const [scope, setScope] = useState<OfflineIdentity | null>(null);
   const [status, setStatus] = useState<
     "checking" | "verified" | "locked" | "failed"
   >("checking");
@@ -17,13 +20,15 @@ export function OfflineDeviceStatus({
     async function check() {
       try {
         const identity = await activeIdentity();
-        if (mounted)
+        if (mounted) {
+          setScope(identity);
           setStatus(
             identity?.userId === userId &&
               identity?.organizationId === organizationId
               ? "verified"
               : "locked",
           );
+        }
       } catch {
         if (mounted) setStatus("failed");
       }
@@ -47,6 +52,7 @@ export function OfflineDeviceStatus({
             : "Za potvrdu naloga i radnog prostora potrebna je veza."}
       </p>
       {status === "verified" && <SyncControl />}
+      {status === "verified" && scope && <RetainedWorkPanel identity={scope} />}
     </>
   );
 }

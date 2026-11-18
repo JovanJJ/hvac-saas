@@ -22,6 +22,12 @@ export function OfflineSessionGuard() {
       requested = false;
       try {
         await verifyIdentity();
+        // Refresh an already-installed shell without reloading unsaved forms or deleting device work.
+        if ("serviceWorker" in navigator) {
+          const registration =
+            await navigator.serviceWorker.getRegistration("/");
+          await registration?.update();
+        }
       } catch {
         /* Offline/read-only access survives network errors; explicit denial locks it. */
       } finally {

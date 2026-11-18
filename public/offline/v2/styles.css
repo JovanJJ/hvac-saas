@@ -123,3 +123,25 @@ input[type="file"] {
   min-width: 0;
   font-size: 0.9rem;
 }
+
+.comparison {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  margin: 1rem 0;
+}
+.comparison th,
+.comparison td {
+  padding: 0.5rem;
+  border: 1px solid #b9c8bc;
+  text-align: left;
+  vertical-align: top;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+input[type="checkbox"] {
+  width: 24px;
+  min-height: 24px;
+  margin-right: 0.5rem;
+  vertical-align: middle;
+}

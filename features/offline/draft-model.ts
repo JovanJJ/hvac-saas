@@ -17,6 +17,7 @@ export type FieldDraft = {
   actorId: string;
   actorLabel: string;
   operationId: string;
+  reconcileFrom?: string;
   baseVisitVersion: number;
   baseItemVersion: number;
   baseEnteredBy: string | null;
@@ -108,6 +109,7 @@ export function makeDraft(
     actorId: identity.userId,
     actorLabel: identity.userLabel,
     operationId: previous?.operationId ?? crypto.randomUUID(),
+    reconcileFrom: previous?.reconcileFrom,
     baseVisitVersion: previous?.baseVisitVersion ?? bundle.visit.version,
     baseItemVersion: previous?.baseItemVersion ?? item.version,
     baseEnteredBy: previous?.baseEnteredBy ?? item.enteredBy,

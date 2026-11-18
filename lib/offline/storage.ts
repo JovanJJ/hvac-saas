@@ -16,7 +16,7 @@ import {
 export { toDraftValues };
 export type { DraftValues, FieldDraft };
 const DATABASE = "teren-field";
-const VERSION = 4;
+const VERSION = 5;
 const MARKER = "teren-offline-boundary";
 export const changeEvent = "teren-offline-change";
 type Scope = OfflineIdentity & {
@@ -73,6 +73,16 @@ function openDatabase(): Promise<IDBDatabase> {
         photos.createIndex("visit", ["userId", "organizationId", "visitId"]);
         photos.createIndex("partition", ["userId", "organizationId"]);
       }
+      for (const name of ["blocked", "recoveries"])
+        if (!db.objectStoreNames.contains(name)) {
+          const store = db.createObjectStore(name, {
+            keyPath:
+              name === "blocked"
+                ? ["userId", "organizationId", "visit.id"]
+                : ["userId", "organizationId", "operationId"],
+          });
+          store.createIndex("partition", ["userId", "organizationId"]);
+        }
       if (!db.objectStoreNames.contains("submissions")) {
         const submissions = db.createObjectStore("submissions", {
           keyPath: ["userId", "organizationId", "visitId"],
@@ -107,7 +117,15 @@ async function transaction<T>(
   try {
     return await new Promise<T>((resolve, reject) => {
       const tx = db.transaction(
-        ["meta", "bundles", "drafts", "submissions", "photos"],
+        [
+          "meta",
+          "bundles",
+          "drafts",
+          "submissions",
+          "photos",
+          "blocked",
+          "recoveries",
+        ],
         mode,
       );
       let result: T,
@@ -265,17 +283,78 @@ export async function verifyIdentity(): Promise<OfflineIdentity> {
         "active",
       );
       const allowed = new Set(assignments);
-      const cursor = tx
-        .objectStore("bundles")
+      const partition = [identity.userId, identity.organizationId];
+      const drafts = tx
+        .objectStore("drafts")
         .index("partition")
-        .openCursor([identity.userId, identity.organizationId]);
-      cursor.onsuccess = () => {
-        const entry = cursor.result;
-        if (!entry) return;
-        // Retain draft evidence in its own locked partition, but remove inaccessible source snapshots.
-        if (!allowed.has((entry.value as OfflineBundle).visit.id))
-          entry.delete();
-        entry.continue();
+        .getAll(partition);
+      const submissions = tx
+        .objectStore("submissions")
+        .index("partition")
+        .getAll(partition);
+      const photos = tx
+        .objectStore("photos")
+        .index("partition")
+        .getAll(partition);
+      photos.onsuccess = () => {
+        const retained = new Set<string>(
+          [
+            ...(drafts.result as FieldDraft[]),
+            ...(submissions.result as Submission[]),
+            ...(photos.result as LocalPhoto[]).filter(photoPending),
+          ].map((record) => record.visitId),
+        );
+        // Reauthorization releases only authorization errors. Conflicts keep their original operations frozen.
+        for (const [store, records] of [
+          ["drafts", drafts.result],
+          ["submissions", submissions.result],
+          ["photos", photos.result],
+        ] as const) {
+          for (const record of records)
+            if (
+              allowed.has(record.visitId) &&
+              [401, 403, 404].includes(record.errorStatus)
+            )
+              tx.objectStore(store).put({
+                ...record,
+                error: undefined,
+                errorStatus: undefined,
+              });
+        }
+        const cursor = tx
+          .objectStore("bundles")
+          .index("partition")
+          .openCursor(partition);
+        cursor.onsuccess = () => {
+          const entry = cursor.result;
+          if (!entry) return;
+          const bundle = entry.value as OfflineBundle;
+          if (!allowed.has(bundle.visit.id)) {
+            if (retained.has(bundle.visit.id))
+              tx.objectStore("blocked").put(bundle);
+            entry.delete();
+          }
+          entry.continue();
+        };
+        const blocked = tx
+          .objectStore("blocked")
+          .index("partition")
+          .openCursor(partition);
+        blocked.onsuccess = () => {
+          const entry = blocked.result;
+          if (!entry) return;
+          const bundle = entry.value as OfflineBundle;
+          if (allowed.has(bundle.visit.id)) {
+            const current = tx
+              .objectStore("bundles")
+              .get([identity.userId, identity.organizationId, bundle.visit.id]);
+            current.onsuccess = () => {
+              if (!current.result) tx.objectStore("bundles").put(bundle);
+            };
+            entry.delete();
+          }
+          entry.continue();
+        };
       };
     };
   });
@@ -716,6 +795,7 @@ export async function prepareSync(
         });
         operations.push({
           operationId: draft.operationId,
+          reconcileFrom: draft.reconcileFrom,
           entityId: visitId,
           type: "save",
           baseVersion: draft.baseItemVersion,
@@ -736,6 +816,7 @@ export async function prepareSync(
         });
         operations.push({
           operationId: pending.operationId,
+          reconcileFrom: pending.reconcileFrom,
           entityId: visitId,
           type: "submit",
           baseVersion: pending.baseVersion,
@@ -832,4 +913,28 @@ export async function recordSyncFailure(
     };
   });
   notifyChange({ kind: "sync-error", visitId: operation.entityId });
+}
+
+export async function hasReplayConflict(
+  identity: OfflineIdentity,
+  visitId: string,
+): Promise<boolean> {
+  return guarded(identity, "readonly", (tx, done, _fail, scope) => {
+    if (!scope.assignments.includes(visitId)) {
+      done(true);
+      return;
+    }
+    const partition = [identity.userId, identity.organizationId, visitId];
+    const drafts = tx.objectStore("drafts").index("visit").getAll(partition);
+    const submission = tx.objectStore("submissions").get(partition);
+    const photos = tx.objectStore("photos").index("visit").getAll(partition);
+    photos.onsuccess = () =>
+      done(
+        (drafts.result as FieldDraft[]).some(
+          (d) => d.errorStatus === 409 || d.error === "visit_locked",
+        ) ||
+          submission.result?.errorStatus === 409 ||
+          (photos.result as LocalPhoto[]).some((p) => p.errorStatus === 409),
+      );
+  });
 }

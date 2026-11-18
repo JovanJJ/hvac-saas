@@ -176,11 +176,14 @@ export async function offlinePhotoCommand(request: Request, kind: string) {
               ? "attachment_unavailable"
               : result.error.code === "PT409"
                 ? "attachment_conflict"
-                : "invalid_photo",
+                : result.error.message === "visit_locked"
+                  ? "visit_locked"
+                  : "invalid_photo",
         },
         result.error.code === "42501"
           ? 404
-          : result.error.code === "PT409"
+          : result.error.code === "PT409" ||
+              result.error.message === "visit_locked"
             ? 409
             : result.error.code.startsWith("22")
               ? 422

@@ -55,14 +55,20 @@ export async function POST(request: Request) {
       blocked = true;
       continue;
     }
-    const { data, error } = await client.rpc("replay_field_command", {
+    const args = {
       p_organization_id: identity.organizationId,
       p_visit_id: operation.entityId,
       p_operation_id: operation.operationId,
       p_kind: operation.type,
       p_version: operation.baseVersion,
       p_data: validated.data.payload,
-    });
+    };
+    const { data, error } = validated.data.reconcileFrom
+      ? await client.rpc("reconcile_field_command", {
+          ...args,
+          p_previous_operation_id: validated.data.reconcileFrom,
+        })
+      : await client.rpc("replay_field_command", args);
     if (error) {
       const status =
         error.code === "42501"
@@ -75,6 +81,7 @@ export async function POST(request: Request) {
       const safe = [
         "visit_denied",
         "stale_version",
+        "replay_required",
         "operation_conflict",
         "visit_locked",
         "pending_items",

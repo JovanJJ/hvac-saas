@@ -4,6 +4,7 @@ import {
   verifyIdentity,
   listBundles,
   prepareSync,
+  hasReplayConflict,
   acknowledgeSync,
   recordSyncFailure,
   lockIdentity,
@@ -26,11 +27,19 @@ export function syncDevice(): Promise<string> {
 }
 async function run() {
   let confirmed = 0,
-    retainedPhotos = false;
+    retainedPhotos = false,
+    retainedOperations = false;
   const initial = await activeIdentity();
   if (!initial)
     throw new Error("Povežite se i potvrdite nalog na ekranu Danas.");
-  const identity = await verifyIdentity();
+  let identity: OfflineIdentity;
+  try {
+    identity = await verifyIdentity();
+  } catch {
+    throw new Error(
+      "Sesija ili pristup nisu potvrđeni. Povežite se i prijavite istim nalogom; lokalni rad je zadržan.",
+    );
+  }
   if (!same(initial, identity))
     throw new Error(
       "Nalog ili radni prostor je promenjen. Slanje je zaustavljeno.",
@@ -42,6 +51,10 @@ async function run() {
     for (let batch = 0; batch < 20; batch++) {
       if (!same(await activeIdentity(), identity))
         throw new Error("Nalog je promenjen. Slanje je zaustavljeno.");
+      if (await hasReplayConflict(identity, bundle.visit.id)) {
+        retainedOperations = true;
+        break;
+      }
       const operations = await prepareSync(identity, bundle.visit.id);
       if (!operations.length) {
         if (!photoPassDone) {
@@ -124,10 +137,14 @@ async function run() {
         throw new Error(
           "Server trenutno nije dostupan. Potvrđene izmene su sačuvane; preostale čekaju ponovni pokušaj.",
         );
-      if (failed)
-        return `Potvrđeno na serveru: ${confirmed}. Preostale operacije su zadržane; proverite greške u poseti.`;
+      if (failed) {
+        retainedOperations = true;
+        break;
+      }
     }
   }
+  if (retainedOperations)
+    return `Potvrđeno na serveru: ${confirmed}. Preostale operacije su zadržane; otvorite usaglašavanje u poseti.`;
   if (retainedPhotos)
     return `Potvrđeno na serveru: ${confirmed}. Fotografije koje čekaju ili imaju grešku su zadržane; predaja ih čeka.`;
   return confirmed

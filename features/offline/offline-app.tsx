@@ -2,6 +2,8 @@
 import { createRoot } from "react-dom/client";
 import { useEffect, useState } from "react";
 import { ReportTotals, SystemResult } from "@/features/reports/document";
+import { RecoveryPanel } from "./recovery-panel";
+import { RetainedWorkPanel } from "./retained-work";
 import { SyncControl } from "./sync-control";
 import { SubmissionControl } from "./submission-control";
 import { LocalPhotoPanel } from "./photo-panel";
@@ -89,11 +91,12 @@ function VisitDetails({
         <p>Lokalni pregled · izmene još nisu potvrđene na serveru.</p>
       )}
       <ReportTotals counts={counts} />
+      <RecoveryPanel identity={identity} bundle={bundle} />
       {visit.items.map((item) =>
         editable ? (
           <div key={item.id}>
             <DraftEditor
-              key={`${item.id}:${item.version}`}
+              key={`${item.id}:${item.version}:${drafts.find((d) => d.itemId === item.id)?.reconcileFrom ?? ""}`}
               identity={identity}
               bundle={bundle}
               item={item}
@@ -256,6 +259,11 @@ function App() {
           za ovaj telefon.
         </p>
         <a href="/today">Otvori Danas uz vezu</a>
+        <p>
+          Sesija može biti istekla. Neposlati rad je zadržan; nastavite istim
+          nalogom i radnim prostorom.
+        </p>
+        <a href="/sign-in">Prijavi se ponovo</a>
       </>
     );
   const selected = bundles.find((b) => b.visit.id === visitId);
@@ -270,6 +278,7 @@ function App() {
         </p>
       </header>
       <SyncControl />
+      <RetainedWorkPanel identity={identity} />
       {visitId ? (
         selected ? (
           <VisitDetails

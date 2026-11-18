@@ -49,6 +49,27 @@ export type Database = {
         Args: { p_organization_id: string };
         Returns: string[];
       };
+      field_recovery_context: {
+        Args: {
+          p_organization_id: string;
+          p_visit_id: string;
+          p_operation: unknown;
+          p_photo_ids: string[];
+        };
+        Returns: unknown;
+      };
+      reconcile_field_command: {
+        Args: {
+          p_organization_id: string;
+          p_visit_id: string;
+          p_operation_id: string;
+          p_previous_operation_id: string;
+          p_kind: string;
+          p_version: number;
+          p_data: unknown;
+        };
+        Returns: unknown;
+      };
       replay_photo_command: {
         Args: {
           p_organization_id: string;

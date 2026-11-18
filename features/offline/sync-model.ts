@@ -3,6 +3,7 @@ import { itemSchema } from "@/features/visits/model";
 import type { OfflineBundle } from "./model";
 const envelope = {
   operationId: z.string().uuid(),
+  reconcileFrom: z.string().uuid().optional(),
   entityId: z.string().uuid(),
   baseVersion: z.number().int().positive(),
 };
@@ -68,12 +69,15 @@ export type Submission = {
   operationId: string;
   baseVersion: number;
   prerequisites: string[];
+  reconcileFrom?: string;
   queuedAt: string;
   attemptedAt: string | null;
   error?: string;
   errorStatus?: number;
 };
 export const syncMessages: Record<string, string> = {
+  replay_required:
+    "Prethodna operacija je već potvrđena. Proverite trenutno stanje pre nastavka.",
   stale_version:
     "Podaci su promenjeni na serveru. Nacrt je zadržan; potrebno je usaglašavanje.",
   operation_conflict:

@@ -239,7 +239,7 @@ export async function photoFailure(
 export async function acknowledgePhoto(
   identity: OfflineIdentity,
   acknowledgement: PhotoAck,
-  cleanupPending = false,
+  cleanupPending?: boolean,
 ) {
   const ack = acknowledgement;
   if (
@@ -301,7 +301,9 @@ export async function acknowledgePhoto(
         error: undefined,
         errorStatus: undefined,
         cleanupPending:
-          ack.phase === "remove" ? cleanupPending : photo.cleanupPending,
+          ack.phase === "remove"
+            ? (cleanupPending ?? photo.cleanupPending)
+            : photo.cleanupPending,
       });
       const visit =
         ack.visit.version >= bundle.visit.version
