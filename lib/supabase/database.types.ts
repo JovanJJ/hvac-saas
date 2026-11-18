@@ -49,6 +49,17 @@ export type Database = {
         Args: { p_organization_id: string };
         Returns: string[];
       };
+      replay_field_command: {
+        Args: {
+          p_organization_id: string;
+          p_visit_id: string;
+          p_operation_id: string;
+          p_kind: string;
+          p_version: number;
+          p_data: unknown;
+        };
+        Returns: unknown;
+      };
       offline_visit_bundle: {
         Args: { p_organization_id: string; p_visit_id: string };
         Returns: unknown;

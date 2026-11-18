@@ -57,6 +57,10 @@ export async function createReportFixture({
       }
       await db.query("begin");
       await db.query(
+        "delete from hvac_private.field_replay_receipts where organization_id=$1 and payload->>'visit'=$2",
+        [org, visitId],
+      );
+      await db.query(
         "delete from hvac_private.identity_events where subject_id in(select l.id from hvac_private.report_links l join public.report_revisions r on r.id=l.revision_id where r.organization_id=$1 and r.visit_id=$2)",
         [org, visitId],
       );

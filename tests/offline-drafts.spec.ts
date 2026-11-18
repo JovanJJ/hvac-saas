@@ -34,6 +34,7 @@ test("durable field drafts preserve raw inputs, reject failed writes, freeze que
     viewport: info.project.use.viewport,
   };
   let context = await chromium.launchPersistentContext(profile, options);
+  await context.route("**/api/field/sync", (route) => route.abort());
   try {
     let page = context.pages()[0] || (await context.newPage());
     await login(page);
@@ -63,7 +64,7 @@ test("durable field drafts preserve raw inputs, reject failed writes, freeze que
           };
           request.onsuccess = () => resolve(request.result);
         });
-      const db = await open(2);
+      const db = await open(3);
       const captured = await new Promise<{
         active: unknown;
         bundles: unknown[];
@@ -148,6 +149,7 @@ test("durable field drafts preserve raw inputs, reject failed writes, freeze que
     expect(initial.values.parts[0].quantity).toBe("0,50");
     await context.close();
     context = await chromium.launchPersistentContext(profile, options);
+    await context.route("**/api/field/sync", (route) => route.abort());
     await context.setOffline(true);
     page = context.pages()[0] || (await context.newPage());
     await page.goto(`/visits/${fixture.visitId}`, {
@@ -263,7 +265,13 @@ test("durable field drafts preserve raw inputs, reject failed writes, freeze que
       (await drafts(page, fixture.visitId)).find(
         (d) => d.itemId === initial.itemId,
       ),
-    ).toEqual(queued);
+    ).toMatchObject({
+      operationId: queued.operationId,
+      payload: queued.payload,
+      values: queued.values,
+      actorId: queued.actorId,
+      baseItemVersion: queued.baseItemVersion,
+    });
     await page.goto(`/offline/v2/index.html?visit=${fixture.visitId}`);
     const oldRevision = (await drafts(page, fixture.visitId)).find(
       (d) => d.itemId === other.itemId,

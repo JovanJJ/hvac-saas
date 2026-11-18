@@ -47,6 +47,13 @@ await withDatabase(async (db) => {
           ),
         );
         console.log("PASS: offline_visit_bundle.sql");
+        await db.query(
+          await readFile(
+            new URL("../supabase/tests/field_replay.sql", import.meta.url),
+            "utf8",
+          ),
+        );
+        console.log("PASS: field_replay.sql");
       }
       if (file === "report_issuance.sql") {
         await db.query(

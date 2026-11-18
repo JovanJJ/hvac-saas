@@ -1,6 +1,11 @@
 "use client";
 import { useEffect, useState, type ReactNode } from "react";
-import { activeIdentity, listDrafts, changeEvent } from "@/lib/offline/storage";
+import {
+  activeIdentity,
+  listDrafts,
+  getSubmission,
+  changeEvent,
+} from "@/lib/offline/storage";
 export function DraftBoundary({
   userId,
   organizationId,
@@ -26,7 +31,10 @@ export function DraftBoundary({
             ? await listDrafts(identity, visitId)
             : [];
         if (mounted) {
-          setPending(records.length);
+          setPending(
+            records.length +
+              (identity && (await getSubmission(identity, visitId)) ? 1 : 0),
+          );
           setFailed(false);
           setChecking(false);
         }

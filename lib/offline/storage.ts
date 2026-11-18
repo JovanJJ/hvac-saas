@@ -1,3 +1,9 @@
+import {
+  submissionIssue,
+  type Submission,
+  type SyncAck,
+  type SyncOperation,
+} from "@/features/offline/sync-model";
 import type { OfflineBundle, OfflineIdentity } from "@/features/offline/model";
 import {
   draftPayload,
@@ -9,7 +15,7 @@ import {
 export { toDraftValues };
 export type { DraftValues, FieldDraft };
 const DATABASE = "teren-field";
-const VERSION = 2;
+const VERSION = 3;
 const MARKER = "teren-offline-boundary";
 export const changeEvent = "teren-offline-change";
 type Scope = OfflineIdentity & {
@@ -59,6 +65,12 @@ function openDatabase(): Promise<IDBDatabase> {
         drafts.createIndex("visit", ["userId", "organizationId", "visitId"]);
         drafts.createIndex("partition", ["userId", "organizationId"]);
       }
+      if (!db.objectStoreNames.contains("submissions")) {
+        const submissions = db.createObjectStore("submissions", {
+          keyPath: ["userId", "organizationId", "visitId"],
+        });
+        submissions.createIndex("partition", ["userId", "organizationId"]);
+      }
     };
     request.onerror = () => reject(request.error);
     request.onblocked = () => {
@@ -86,7 +98,10 @@ async function transaction<T>(
   const db = await openDatabase();
   try {
     return await new Promise<T>((resolve, reject) => {
-      const tx = db.transaction(["meta", "bundles", "drafts"], mode);
+      const tx = db.transaction(
+        ["meta", "bundles", "drafts", "submissions"],
+        mode,
+      );
       let result: T,
         failure: Error | null = null;
       const fail = (error: Error) => {
@@ -162,11 +177,13 @@ export async function lockIdentity(discard = false) {
     tx.objectStore("meta").delete("active");
     if (!discard) return;
     const drafts = tx.objectStore("drafts").getAll();
-    drafts.onsuccess = () => {
+    const submissions = tx.objectStore("submissions").getAll();
+    submissions.onsuccess = () => {
       const protectedVisits = new Set(
-        (drafts.result as FieldDraft[]).map((d) =>
-          JSON.stringify([d.userId, d.organizationId, d.visitId]),
-        ),
+        [
+          ...(drafts.result as FieldDraft[]),
+          ...(submissions.result as Submission[]),
+        ].map((d) => JSON.stringify([d.userId, d.organizationId, d.visitId])),
       );
       const cursor = tx.objectStore("bundles").openCursor();
       cursor.onsuccess = () => {
@@ -291,8 +308,14 @@ export async function saveBundle(
       .index("visit")
       .count([identity.userId, identity.organizationId, bundle.visit.id]);
     pending.onsuccess = () => {
-      if (pending.result) fail(new Error("local_work_pending"));
-      else tx.objectStore("bundles").put(bundle);
+      const submission = tx
+        .objectStore("submissions")
+        .get([identity.userId, identity.organizationId, bundle.visit.id]);
+      submission.onsuccess = () => {
+        if (pending.result || submission.result)
+          fail(new Error("local_work_pending"));
+        else tx.objectStore("bundles").put(bundle);
+      };
     };
   });
   if (identity.epoch !== currentEpoch()) throw new Error("identity_changed");
@@ -305,13 +328,19 @@ export async function removeBundle(identity: OfflineIdentity, visitId: string) {
       .index("visit")
       .count([identity.userId, identity.organizationId, visitId]);
     pending.onsuccess = () => {
-      if (pending.result) fail(new Error("local_work_pending"));
-      else
-        tx.objectStore("bundles").delete([
-          identity.userId,
-          identity.organizationId,
-          visitId,
-        ]);
+      const submission = tx
+        .objectStore("submissions")
+        .get([identity.userId, identity.organizationId, visitId]);
+      submission.onsuccess = () => {
+        if (pending.result || submission.result)
+          fail(new Error("local_work_pending"));
+        else
+          tx.objectStore("bundles").delete([
+            identity.userId,
+            identity.organizationId,
+            visitId,
+          ]);
+      };
     };
   });
   notifyChange({ kind: "bundle" });
@@ -364,6 +393,12 @@ export async function saveDraft(
         fail(new Error("visit_unavailable"));
         return;
       }
+      const submission = tx
+        .objectStore("submissions")
+        .get([identity.userId, identity.organizationId, visitId]);
+      submission.onsuccess = () => {
+        if (submission.result) fail(new Error("submission_queued"));
+      };
       const source = tx
         .objectStore("bundles")
         .get([identity.userId, identity.organizationId, visitId]);
@@ -417,6 +452,12 @@ export async function changeDraft(
         fail(new Error("visit_unavailable"));
         return;
       }
+      const submission = tx
+        .objectStore("submissions")
+        .get([identity.userId, identity.organizationId, visitId]);
+      submission.onsuccess = () => {
+        if (submission.result) fail(new Error("submission_queued"));
+      };
       const source = tx
         .objectStore("bundles")
         .get([identity.userId, identity.organizationId, visitId]);
@@ -437,7 +478,10 @@ export async function changeDraft(
             fail(new Error("stale_draft"));
             return;
           }
-          if (previous.attemptedAt) {
+          if (
+            previous.attemptedAt &&
+            !(action === "edit" && previous.errorStatus === 422)
+          ) {
             fail(new Error("draft_attempted"));
             return;
           }
@@ -449,6 +493,12 @@ export async function changeDraft(
           try {
             const next: FieldDraft = {
               ...previous,
+              operationId: previous.attemptedAt
+                ? crypto.randomUUID()
+                : previous.operationId,
+              attemptedAt: null,
+              error: undefined,
+              errorStatus: undefined,
               revision: previous.revision + 1,
               updatedAt: new Date().toISOString(),
               status: action === "queue" ? "queued" : "local",
@@ -474,4 +524,268 @@ export async function changeDraft(
     revision: record?.revision ?? 0,
   });
   return record;
+}
+
+export async function getSubmission(
+  identity: OfflineIdentity,
+  visitId: string,
+): Promise<Submission | null> {
+  return guarded(identity, "readonly", (tx, done, _fail, scope) => {
+    if (!scope.assignments.includes(visitId)) {
+      done(null);
+      return;
+    }
+    const bundle = tx
+      .objectStore("bundles")
+      .get([identity.userId, identity.organizationId, visitId]);
+    bundle.onsuccess = () => {
+      if (!bundle.result) {
+        done(null);
+        return;
+      }
+      const request = tx
+        .objectStore("submissions")
+        .get([identity.userId, identity.organizationId, visitId]);
+      request.onsuccess = () => done(request.result ?? null);
+    };
+  });
+}
+export async function queueSubmission(
+  identity: OfflineIdentity,
+  visitId: string,
+) {
+  await guarded<void>(identity, "readwrite", (tx, _done, fail, scope) => {
+    if (!scope.assignments.includes(visitId)) {
+      fail(new Error("visit_unavailable"));
+      return;
+    }
+    const key = [identity.userId, identity.organizationId, visitId];
+    const existing = tx.objectStore("submissions").get(key);
+    const source = tx.objectStore("bundles").get(key);
+    const drafts = tx.objectStore("drafts").index("visit").getAll(key);
+    drafts.onsuccess = () => {
+      if (existing.result) return;
+      const bundle = source.result as OfflineBundle | undefined;
+      const records = drafts.result as FieldDraft[];
+      if (
+        !bundle ||
+        !["scheduled", "in_progress"].includes(bundle.visit.status)
+      ) {
+        fail(new Error("visit_locked"));
+        return;
+      }
+      if (records.some((d) => d.status !== "queued" || !d.payload || d.error)) {
+        fail(
+          new Error(
+            "Pripremite svaki nacrt za slanje i rešite greške pre predaje.",
+          ),
+        );
+        return;
+      }
+      const issue = submissionIssue(
+        bundle,
+        new Map(records.map((d) => [d.itemId, d.payload!])),
+      );
+      if (issue) {
+        fail(new Error(issue));
+        return;
+      }
+      const submission: Submission = {
+        userId: identity.userId,
+        organizationId: identity.organizationId,
+        visitId,
+        operationId: crypto.randomUUID(),
+        baseVersion: bundle.visit.version + records.length,
+        prerequisites: records.map((d) => d.operationId),
+        queuedAt: new Date().toISOString(),
+        attemptedAt: null,
+      };
+      tx.objectStore("submissions").put(submission);
+    };
+  });
+  notifyChange({ kind: "submission", visitId });
+}
+export async function cancelSubmission(
+  identity: OfflineIdentity,
+  visitId: string,
+) {
+  await guarded<void>(identity, "readwrite", (tx, _done, fail) => {
+    const key = [identity.userId, identity.organizationId, visitId];
+    const request = tx.objectStore("submissions").get(key);
+    request.onsuccess = () => {
+      const record = request.result as Submission | undefined;
+      if (record?.attemptedAt && record.errorStatus !== 422) {
+        fail(new Error("submission_attempted"));
+        return;
+      }
+      tx.objectStore("submissions").delete(key);
+    };
+  });
+  notifyChange({ kind: "submission", visitId });
+}
+// Freeze one bounded visit batch atomically before transport. Concurrent senders retry identical operations.
+export async function prepareSync(
+  identity: OfflineIdentity,
+  visitId: string,
+): Promise<SyncOperation[]> {
+  return guarded(identity, "readwrite", (tx, done, fail, scope) => {
+    if (!scope.assignments.includes(visitId)) {
+      fail(new Error("visit_unavailable"));
+      return;
+    }
+    const key = [identity.userId, identity.organizationId, visitId];
+    const source = tx.objectStore("bundles").get(key);
+    const drafts = tx.objectStore("drafts").index("visit").getAll(key);
+    const submission = tx.objectStore("submissions").get(key);
+    submission.onsuccess = () => {
+      if (!source.result) {
+        done([]);
+        return;
+      }
+      const records = (drafts.result as FieldDraft[])
+        .filter((d) => d.status === "queued")
+        .sort(
+          (a, b) =>
+            a.createdAt.localeCompare(b.createdAt) ||
+            a.itemId.localeCompare(b.itemId),
+        );
+      if (records.some((d) => d.errorStatus && d.errorStatus < 500)) {
+        done([]);
+        return;
+      }
+      const selected = records.slice(0, 5); // at most 150 KiB of canonical item payloads
+      const operations: SyncOperation[] = [];
+      for (const draft of selected) {
+        if (!draft.payload || draft.actorId !== identity.userId) {
+          fail(new Error("draft_invalid"));
+          return;
+        }
+        // SQL's existing command boundary also enforces 30 KiB per item.
+        if (
+          new TextEncoder().encode(JSON.stringify(draft.payload)).length > 29000
+        ) {
+          fail(new Error("Nacrt je prevelik za slanje. Skratite unos."));
+          return;
+        }
+        tx.objectStore("drafts").put({
+          ...draft,
+          attemptedAt: draft.attemptedAt ?? new Date().toISOString(),
+        });
+        operations.push({
+          operationId: draft.operationId,
+          entityId: visitId,
+          type: "save",
+          baseVersion: draft.baseItemVersion,
+          payload: draft.payload,
+        });
+      }
+      const pending = submission.result as Submission | undefined;
+      // Send finalization only after EVERY prerequisite was acknowledged and removed in a prior transaction.
+      if (
+        !drafts.result.length &&
+        pending &&
+        !(pending.errorStatus && pending.errorStatus < 500)
+      ) {
+        tx.objectStore("submissions").put({
+          ...pending,
+          attemptedAt: pending.attemptedAt ?? new Date().toISOString(),
+        });
+        operations.push({
+          operationId: pending.operationId,
+          entityId: visitId,
+          type: "submit",
+          baseVersion: pending.baseVersion,
+          payload: {},
+        });
+      }
+      done(operations);
+    };
+  });
+}
+export async function acknowledgeSync(
+  identity: OfflineIdentity,
+  operation: SyncOperation,
+  acknowledgement: SyncAck,
+) {
+  if (
+    acknowledgement.operationId !== operation.operationId ||
+    acknowledgement.visitId !== operation.entityId ||
+    acknowledgement.type !== operation.type ||
+    acknowledgement.baseVersion !== operation.baseVersion ||
+    !Number.isInteger(acknowledgement.visit.version) ||
+    (operation.type === "submit" &&
+      (acknowledgement.visit.status !== "submitted" ||
+        acknowledgement.visit.version !== operation.baseVersion + 1))
+  )
+    throw new Error("invalid_acknowledgement");
+  await guarded<void>(identity, "readwrite", (tx, _done, fail, scope) => {
+    if (!scope.assignments.includes(operation.entityId)) {
+      fail(new Error("visit_unavailable"));
+      return;
+    }
+    const key = [identity.userId, identity.organizationId, operation.entityId];
+    const source = tx.objectStore("bundles").get(key);
+    const store = tx.objectStore(
+      operation.type === "save" ? "drafts" : "submissions",
+    );
+    const recordKey =
+      operation.type === "save" ? [...key, operation.payload.itemId] : key;
+    const request = store.get(recordKey);
+    request.onsuccess = () => {
+      if (
+        !request.result ||
+        request.result.operationId !== operation.operationId
+      )
+        return;
+      const bundle = source.result as OfflineBundle | undefined;
+      if (!bundle) {
+        fail(new Error("visit_unavailable"));
+        return;
+      }
+      const ack = acknowledgement;
+      if (
+        operation.type === "save" &&
+        (!ack.item ||
+          ack.item.id !== operation.payload.itemId ||
+          ack.item.version !== operation.baseVersion + 1)
+      ) {
+        fail(new Error("invalid_acknowledgement"));
+        return;
+      }
+      const visit =
+        ack.visit.version >= bundle.visit.version
+          ? { ...bundle.visit, ...ack.visit }
+          : bundle.visit;
+      const items = visit.items.map((item) =>
+        ack.item?.id === item.id && ack.item.version >= item.version
+          ? { ...ack.item, confirmedAt: ack.confirmedAt }
+          : item,
+      );
+      tx.objectStore("bundles").put({ ...bundle, visit: { ...visit, items } });
+      store.delete(recordKey);
+    };
+  });
+  notifyChange({ kind: "acknowledged", visitId: operation.entityId });
+}
+export async function recordSyncFailure(
+  identity: OfflineIdentity,
+  operation: SyncOperation,
+  status: number,
+  error: string,
+) {
+  if (status === 424) return;
+  await guarded<void>(identity, "readwrite", (tx) => {
+    const key = [identity.userId, identity.organizationId, operation.entityId];
+    const store = tx.objectStore(
+      operation.type === "save" ? "drafts" : "submissions",
+    );
+    const recordKey =
+      operation.type === "save" ? [...key, operation.payload.itemId] : key;
+    const request = store.get(recordKey);
+    request.onsuccess = () => {
+      if (request.result?.operationId === operation.operationId)
+        store.put({ ...request.result, error, errorStatus: status });
+    };
+  });
+  notifyChange({ kind: "sync-error", visitId: operation.entityId });
 }

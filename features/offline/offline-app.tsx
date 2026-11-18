@@ -2,6 +2,8 @@
 import { createRoot } from "react-dom/client";
 import { useEffect, useState } from "react";
 import { ReportTotals, SystemResult } from "@/features/reports/document";
+import { SyncControl } from "./sync-control";
+import { SubmissionControl } from "./submission-control";
 import { DraftEditor } from "./draft-editor";
 import type { OfflineBundle, OfflineIdentity } from "./model";
 import {
@@ -89,7 +91,7 @@ function VisitDetails({
       {visit.items.map((item) =>
         editable ? (
           <DraftEditor
-            key={item.id}
+            key={`${item.id}:${item.version}`}
             identity={identity}
             bundle={bundle}
             item={item}
@@ -118,6 +120,7 @@ function VisitDetails({
       {drafts.some((d) => d.status === "queued") && (
         <p role="status">Čeka slanje. Podaci još nisu poslati kancelariji.</p>
       )}
+      {editable && <SubmissionControl identity={identity} visitId={visit.id} />}
       <p>Fotografije ({bundle.photoCount}) dostupne su samo uz vezu.</p>
       {drafts.length ? (
         <p>
@@ -246,6 +249,7 @@ function App() {
           potvrdi.
         </p>
       </header>
+      <SyncControl />
       {visitId ? (
         selected ? (
           <VisitDetails

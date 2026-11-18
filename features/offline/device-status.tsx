@@ -1,4 +1,5 @@
 "use client";
+import { SyncControl } from "./sync-control";
 import { useEffect, useState } from "react";
 import { activeIdentity, changeEvent } from "@/lib/offline/storage";
 export function OfflineDeviceStatus({
@@ -37,12 +38,15 @@ export function OfflineDeviceStatus({
     };
   }, [userId, organizationId]);
   return (
-    <p role={status === "failed" ? "alert" : "status"}>
-      {status === "verified"
-        ? "Nalog i radni prostor su potvrđeni za ovaj telefon."
-        : status === "failed"
-          ? "Memorija telefona nije dostupna. Rad bez veze nije spreman."
-          : "Za potvrdu naloga i radnog prostora potrebna je veza."}
-    </p>
+    <>
+      <p role={status === "failed" ? "alert" : "status"}>
+        {status === "verified"
+          ? "Nalog i radni prostor su potvrđeni za ovaj telefon."
+          : status === "failed"
+            ? "Memorija telefona nije dostupna. Rad bez veze nije spreman."
+            : "Za potvrdu naloga i radnog prostora potrebna je veza."}
+      </p>
+      {status === "verified" && <SyncControl />}
+    </>
   );
 }

@@ -28,6 +28,8 @@ export type FieldDraft = {
   queuedAt: string | null;
   attemptedAt: string | null;
   payload: ItemInput | null;
+  error?: string;
+  errorStatus?: number;
   values: DraftValues;
 };
 export function toDraftValues(
@@ -75,6 +77,8 @@ export function draftPayload(values: DraftValues, itemId: string): ItemInput {
     throw new Error(
       "Proverite merenja, količine i podatke o pristupu. Prazno merenje nije nula.",
     );
+  if (new TextEncoder().encode(JSON.stringify(parsed.data)).length > 29000)
+    throw new Error("Proverite dužinu unosa. Nacrt je prevelik za slanje.");
   return parsed.data;
 }
 export function makeDraft(

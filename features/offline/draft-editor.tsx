@@ -5,8 +5,10 @@ import {
   actionLabels,
   readingLabels,
 } from "@/features/visits/model";
+import { syncMessages } from "./sync-model";
 import type { OfflineBundle, OfflineIdentity } from "./model";
 import {
+  getSubmission,
   saveDraft,
   changeDraft,
   toDraftValues,
@@ -93,7 +95,11 @@ export function DraftEditor({
   const [values, setValues] = useState<DraftValues>(
     () => draft?.values ?? toDraftValues(item),
   );
-  const [record, setRecord] = useState(draft);
+  const [localRecord, setRecord] = useState(draft);
+  const record =
+    draft && draft.revision >= (localRecord?.revision ?? 0)
+      ? draft
+      : localRecord;
   const [state, setState] = useState<"ready" | "saving" | "saved" | "failed">(
     "ready",
   );
@@ -103,6 +109,25 @@ export function DraftEditor({
     chain = useRef(Promise.resolve());
   const [stale, setStale] = useState(false);
   const queued = record?.status === "queued";
+  const [submitting, setSubmitting] = useState(false);
+  useEffect(() => {
+    let mounted = true;
+    const load = () => {
+      void getSubmission(identity, bundle.visit.id)
+        .then((s) => {
+          if (mounted) setSubmitting(!!s);
+        })
+        .catch(() => {});
+    };
+    load();
+    window.addEventListener(changeEvent, load);
+    window.addEventListener("storage", load);
+    return () => {
+      mounted = false;
+      window.removeEventListener(changeEvent, load);
+      window.removeEventListener("storage", load);
+    };
+  }, [identity, bundle.visit.id]);
   useEffect(() => {
     function changed(event: StorageEvent) {
       if (event.key !== changeEvent || !event.newValue) return;
@@ -201,8 +226,18 @@ export function DraftEditor({
               ? "Čeka slanje · nije potvrđeno na serveru."
               : record
                 ? "Sačuvano na telefonu · nije poslato."
-                : "Preuzeto sa servera · nema lokalnih izmena."}
+                : item.confirmedAt
+                  ? "Potvrđeno na serveru · nema lokalnih izmena."
+                  : "Preuzeto sa servera · nema lokalnih izmena."}
       </p>
+      {record?.error && (
+        <p role="alert">
+          {syncMessages[record.error] ?? "Unos je odbijen. Nacrt je zadržan."}
+        </p>
+      )}
+      {submitting && (
+        <p>Izmena čeka završetak ili otkazivanje lokalne predaje.</p>
+      )}
       {record && (
         <p className="muted">
           Uneo na telefonu: {record.actorLabel} ·{" "}
@@ -223,7 +258,7 @@ export function DraftEditor({
           Ponovi čuvanje
         </button>
       )}
-      <fieldset disabled={queued || stale}>
+      <fieldset disabled={queued || stale || submitting}>
         <legend>Podaci sistema</legend>
         <Choice
           label="Ishod"
@@ -455,7 +490,11 @@ export function DraftEditor({
           <button
             type="button"
             disabled={
-              state === "saving" || stale || (!queued && state === "failed")
+              state === "saving" ||
+              stale ||
+              submitting ||
+              (!!record.attemptedAt && record.errorStatus !== 422) ||
+              (!queued && state === "failed")
             }
             onClick={() => action(queued ? "edit" : "queue")}
           >
@@ -463,7 +502,9 @@ export function DraftEditor({
           </button>
           <button
             type="button"
-            disabled={state === "saving" || stale}
+            disabled={
+              state === "saving" || stale || submitting || !!record.attemptedAt
+            }
             onClick={() => action("discard")}
           >
             Obriši lokalni nacrt
