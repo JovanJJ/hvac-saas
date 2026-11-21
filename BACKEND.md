@@ -37,6 +37,7 @@ Use `401` for missing or expired authentication, `403` for disallowed actions on
 
 | Transition | Conditions and effects |
 | --- | --- |
+| `scheduled/in_progress → cancelled` | Owner/coordinator supplies a nonblank reason and current aggregate version. Retain work, evidence and assignments for office audit; withdraw field access and active schedule visibility. No restore transition is introduced. |
 | `scheduled → in_progress` | Assigned technician or operational staff starts the visit. Preserve actual start time. |
 | `in_progress → submitted` | Actor is assigned or authorized office staff; every included system has an explicit outcome. Validate follow-ups, timestamps and attachment completion. Commit outcomes and tasks consistently. |
 | `submitted → in_progress` | Before issue, owner/coordinator requests a correction with a reason. Field editing resumes. |
@@ -172,3 +173,12 @@ Lifecycle decisions are device-only and add no server endpoint or migration. Syn
 Owner/coordinator Server Actions at register detail routes retain form values on validation/stale errors and require explicit UI confirmation for archive/replacement. They always use the active workspace and caller-scoped Supabase client, then invalidate affected register/schedule/field views. No privileged runtime SQL or new environment variable is used.
 
 `register_detail(organization, kind, entity)` returns a server-owned detail DTO. Office staff can follow the customer → site → system hierarchy; technicians can open only an assigned system. History is read-only, limited to submitted/issued findings for the authorized scope and projected through the report reading/material allowlists. The existing field bundle now includes stable `systemId` links and omits archived add-on systems. Its contact prefers site contact, falling back to customer contact. Unissued previews and first-issue snapshots inherit that mapping; old frozen revisions remain unchanged. Offline downloads retain the system ID, but the complete history page requires connectivity; no new private response is service-worker cached.
+
+
+### M5b scheduling commands and bounded reads
+
+`schedule_visit_command(organization, visit, operation, kind, version, data)` accepts `reschedule` (`start`, `end`, pinned `timeZone`), `reassign` (`members`) and `cancel` (`reason`). Inputs are bounded and validated again in SQL. Server Actions derive organization/actor from the current verified workspace and preserve form input on domain/conflict errors. Each editor pins its operation ID and version across RSC refreshes; a successful change asks staff to reload before a further command. Organization/visit locking is shared with field commands, so a competing office change and submission cannot both use the same old aggregate version.
+
+`schedule_snapshot` takes inclusive local start-date bounds, optional site/member UUIDs and an include-cancelled flag; it is office-only and limits ranges to 31 days. `schedule_visit_detail` reauthorizes before returning current members, planned instants, cancellation information and before/after audit values. Schedule reads/writes use caller-scoped Supabase; no privileged runtime SQL or new configuration is introduced.
+
+Cancellation withdraws offline inventory, downloads, replay/recovery and photo mutations before provider transport, while preserving office reads. Previous assignees cannot replay even an old committed field/photo receipt. Existing M4 authorization recovery retains unsent data without transferring authorship or automatically rebasing versions. A reschedule alone preserves per-item versions; a previously queued handover with an old aggregate version requires the existing reviewed recovery. Issued snapshots/PDFs and report sharing remain unchanged.

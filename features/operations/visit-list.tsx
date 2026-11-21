@@ -1,20 +1,38 @@
 import { DownloadControl } from "@/features/offline/download-control";
+import { visitStatusLabels } from "@/features/visits/model";
 import type { ScheduledVisit } from "./types";
 import Link from "next/link";
 export function VisitList({
   visits,
   offlineScope,
+  manageSchedule = false,
 }: {
   visits: ScheduledVisit[];
+  manageSchedule?: boolean;
   offlineScope?: { userId: string; organizationId: string };
 }) {
   return (
     <div className="mt-6 grid gap-4">
       {!visits.length && <p>Nema zakazanih poseta.</p>}
       {visits.map((visit) => (
-        <article key={visit.id} className="card">
+        <article key={visit.id} className="card min-w-0 break-words">
           <h2>{visit.site}</h2>
           <p>{visit.address}</p>
+          {visit.status && <p>Stanje: {visitStatusLabels[visit.status]}</p>}
+          {visit.cancellationReason && (
+            <p>Razlog otkazivanja: {visit.cancellationReason}</p>
+          )}
+          {manageSchedule && (
+            <Link
+              className="button secondary mt-3"
+              href={`/schedule/${visit.id}`}
+            >
+              {visit.status &&
+              ["scheduled", "in_progress"].includes(visit.status)
+                ? "Izmeni raspored"
+                : "Detalji rasporeda"}
+            </Link>
+          )}
           <p>
             {new Date(visit.start).toLocaleString("sr-Latn-RS", {
               timeZone: visit.timeZone,

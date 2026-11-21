@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import type { OfflineBundle, OfflineIdentity } from "./model";
 import {
+  visitStatusLabels,
   outcomeLabels,
   actionLabels,
   readingLabels,
@@ -239,15 +240,7 @@ function OperationReview({
             Verzija na telefonu:{" "}
             {draft?.baseItemVersion ?? bundle.visit.version}. Trenutna verzija
             posete na serveru: {current!.version} ·{" "}
-            {
-              {
-                scheduled: "Zakazano",
-                in_progress: "U toku",
-                submitted: "Predato kancelariji",
-                issued: "Izdat izveštaj",
-              }[current!.status]
-            }
-            .
+            {visitStatusLabels[current!.status]}.
           </p>
           {!editable && (
             <p role="alert">

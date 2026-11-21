@@ -1,5 +1,12 @@
 import { z } from "zod";
 
+export const visitStatusLabels = {
+  scheduled: "Zakazano",
+  in_progress: "U toku",
+  submitted: "Predato kancelariji",
+  issued: "Izdat izveštaj",
+  cancelled: "Otkazano",
+};
 export const outcomeLabels = {
   pending: "Čeka unos",
   serviced: "Servisirano",
@@ -97,7 +104,9 @@ export type VisitBundle = {
   technicians: string[];
   id: string;
   version: number;
-  status: "scheduled" | "in_progress" | "submitted" | "issued";
+  status: keyof typeof visitStatusLabels;
+  cancellationReason?: string;
+  cancelledAt?: string | null;
   site: string;
   address: string;
   accessNote: string;

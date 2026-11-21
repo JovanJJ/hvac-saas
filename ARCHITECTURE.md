@@ -112,3 +112,6 @@ M4f keeps device schema 5, public shell version 2 and the nine-asset allowlist. 
 
 
 M5a uses caller-scoped Supabase RPCs and additive migrations 041–042 for register maintenance and assignment-scoped equipment history. No runtime credential, storage provider, worker change or package is required. History remains an authenticated online read and is excluded from service-worker caching. Deploy migrations before the application; archived parent checks also protect direct command calls. Existing issued artifacts and offline replay identities are preserved. See [DATABASE.md](DATABASE.md), [BACKEND.md](BACKEND.md) and [FRONTEND.md](FRONTEND.md).
+
+
+M5b adds migrations 043–044 and caller-scoped scheduling RPCs for bounded calendar reads and versioned commands. Cancellation is a retained lifecycle state; no cleanup job destroys recorded work or provider objects. Office history remains online-only. Existing public-shell asset boundaries are unchanged; the shared status label adds a content revision without caching office schedule data. No new dependency or environment variable is required. See [DATABASE.md](DATABASE.md) and [BACKEND.md](BACKEND.md).

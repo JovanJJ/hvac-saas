@@ -45,6 +45,32 @@ export type Database = {
     };
     Views: Record<string, never>;
     Functions: {
+      schedule_visit_command: {
+        Args: {
+          p_organization_id: string;
+          p_visit_id: string;
+          p_operation_id: string;
+          p_kind: string;
+          p_version: number;
+          p_data: unknown;
+        };
+        Returns: string;
+      };
+      schedule_snapshot: {
+        Args: {
+          p_organization_id: string;
+          p_from: string;
+          p_until: string;
+          p_site_id?: string;
+          p_member_id?: string;
+          p_include_cancelled?: boolean;
+        };
+        Returns: unknown;
+      };
+      schedule_visit_detail: {
+        Args: { p_organization_id: string; p_visit_id: string };
+        Returns: unknown;
+      };
       register_detail: {
         Args: {
           p_organization_id: string;

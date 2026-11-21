@@ -14,7 +14,13 @@ import {
 import { reportPreview } from "@/features/reports/dal";
 import { IssueForm } from "@/features/reports/issue-form";
 import { RevisionLink } from "@/features/reports/pages";
-import { actionLabels, outcomeLabels, submissionIssues, totals } from "./model";
+import {
+  visitStatusLabels,
+  actionLabels,
+  outcomeLabels,
+  submissionIssues,
+  totals,
+} from "./model";
 
 export async function VisitWorkspace({
   id,
@@ -50,16 +56,15 @@ export async function VisitWorkspace({
         })}{" "}
         · {visit.contact}
       </p>
-      <p>
-        Stanje:{" "}
-        {visit.status === "issued"
-          ? "Izdat izveštaj"
-          : visit.status === "submitted"
-            ? "Predato kancelariji"
-            : visit.status === "in_progress"
-              ? "U toku"
-              : "Zakazano"}
-      </p>
+      <p>Stanje: {visitStatusLabels[visit.status]}</p>
+      {visit.status === "cancelled" && (
+        <p className="card">Razlog otkazivanja: {visit.cancellationReason}</p>
+      )}
+      {context.workspace.role !== "technician" && (
+        <Link className="button secondary my-3" href={`/schedule/${id}`}>
+          Raspored i dodela posete
+        </Link>
+      )}
       {!office && visit.accessNote && (
         <p className="card">Pristup: {visit.accessNote}</p>
       )}

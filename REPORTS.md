@@ -85,3 +85,6 @@ The worker renderer suffix is `/2` for action-state snapshots and remains `/1` f
 ## M5a register maintenance boundary
 
 Editing/archiving customers, sites, systems or physical components changes operational register data only. A replacement preserves the stable system ID and archives the old component; issued revisions and archived PDF bytes are never rewritten. Future field views, unissued previews and first-issue snapshots prefer the site's contact over customer contact when provided. Existing frozen contact/identity/model/serial values remain unchanged. This changes no PDF template, renderer or artifact version. The equipment browser acceptance issues a real four-system revision, replaces/archives equipment and edits customer/site/system metadata, then compares both the frozen revision and downloaded PDF SHA-256 with their original values.
+
+
+M5b permits schedule changes only before submission. Issued/submitted visits reject reschedule, reassignment and cancellation even when a caller supplies their current version. Cancellation preserves recorded draft work for office review without issuing a customer report or closing its actions. No renderer, template, archive, guest link or receipt changes are introduced.

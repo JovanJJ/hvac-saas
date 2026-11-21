@@ -5,7 +5,6 @@ import { ownerRoster } from "@/features/workspaces/dal";
 import type { StaffContext } from "@/features/workspaces/staff-shell";
 import { activeRegister } from "./active-register";
 import { RegisterList } from "./register-list";
-import { VisitList } from "./visit-list";
 export async function RegisterContent({
   kind,
   selection,
@@ -77,15 +76,6 @@ export async function SchedulingContent({
       ) : (
         <p>Prvo dodajte klijenta, lokaciju i sisteme.</p>
       )}
-    </>
-  );
-}
-export async function ScheduleContent() {
-  const snapshot = await operationSnapshot();
-  return (
-    <>
-      <h1>Raspored</h1>
-      <VisitList visits={snapshot.visits} />
     </>
   );
 }
