@@ -3,21 +3,31 @@ import { useActionState, useState } from "react";
 import { FormField } from "@/components/ui/form-field";
 import { SelectField } from "@/components/ui/select-field";
 import { ScheduleFields } from "./schedule-fields";
+import { activeRegister } from "./active-register";
 import { saveOperation } from "./actions";
 import type { Snapshot } from "./types";
 export function OperationForm({
   kind,
   operationId,
-  snapshot,
+  snapshot: sourceSnapshot,
   members = [],
+  initialSiteId,
+  initialCustomerId,
 }: {
   kind: "customer" | "site" | "system" | "visit";
   operationId: string;
   snapshot: Snapshot;
+  initialSiteId?: string;
+  initialCustomerId?: string;
   members?: { membership_id: string; email: string; active: boolean }[];
 }) {
+  const snapshot = activeRegister(sourceSnapshot);
   const [state, action, pending] = useActionState(saveOperation, {});
-  const [site, setSite] = useState(snapshot.sites[0]?.id ?? "");
+  const [site, setSite] = useState(
+    snapshot.sites.find((row) => row.id === initialSiteId)?.id ??
+      snapshot.sites[0]?.id ??
+      "",
+  );
   const [draft, setDraft] = useState<Record<string, string>>({});
   const [checks, setChecks] = useState<Record<string, boolean>>({});
   const selected = snapshot.sites.find((row) => row.id === site);
@@ -34,6 +44,7 @@ export function OperationForm({
             ["address", "Adresa"],
             ["timeZone", "Vremenska zona"],
             ["accessNote", "Interne napomene za pristup"],
+            ["contact", "Kontakt lokacije"],
           ]
         : kind === "system"
           ? [
@@ -41,6 +52,8 @@ export function OperationForm({
               ["room", "Prostorija"],
               ["model", "Model"],
               ["serial", "Serijski broj"],
+              ["manufacturer", "Proizvođač"],
+              ["systemType", "Vrsta sistema"],
             ]
           : [];
   return (
@@ -56,7 +69,12 @@ export function OperationForm({
           label="Klijent"
           name="customerId"
           required
-          value={draft.customerId ?? snapshot.customers[0]?.id ?? ""}
+          value={
+            draft.customerId ??
+            snapshot.customers.find((c) => c.id === initialCustomerId)?.id ??
+            snapshot.customers[0]?.id ??
+            ""
+          }
           onChange={(e) => setDraft({ ...draft, customerId: e.target.value })}
         >
           {snapshot.customers.map((row) => (
@@ -91,7 +109,14 @@ export function OperationForm({
           onChange={(e) => setDraft({ ...draft, [name]: e.target.value })}
           maxLength={name === "accessNote" ? 2000 : 120}
           required={
-            !["contact", "accessNote", "model", "serial"].includes(name)
+            ![
+              "contact",
+              "accessNote",
+              "model",
+              "serial",
+              "manufacturer",
+              "systemType",
+            ].includes(name)
           }
         />
       ))}

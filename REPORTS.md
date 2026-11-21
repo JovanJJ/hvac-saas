@@ -80,3 +80,8 @@ Verification covers reviewed four-system corrections at phone/desktop widths, mi
 Assignment, deadline, completion and return booking change operational actions only. Issued snapshots, archived PDFs, links and receipts remain unchanged. New snapshots include `actionStateVersion: 1` and an allowlisted follow-up state/completion time; totals count open actions only. Customer output labels completed actions **Završena radnja**, while internal completion notes and actor IDs remain private. An amendment preserves live completed status and historical owner labels; office-managed actions cannot be replaced through its finding editor.
 
 The worker renderer suffix is `/2` for action-state snapshots and remains `/1` for legacy snapshots without the marker. Existing v1/v2 template identifiers remain supported, with unchanged legacy output. Restart/rebuild the dedicated worker when deploying these migrations/application changes.
+
+
+## M5a register maintenance boundary
+
+Editing/archiving customers, sites, systems or physical components changes operational register data only. A replacement preserves the stable system ID and archives the old component; issued revisions and archived PDF bytes are never rewritten. Future field views, unissued previews and first-issue snapshots prefer the site's contact over customer contact when provided. Existing frozen contact/identity/model/serial values remain unchanged. This changes no PDF template, renderer or artifact version. The equipment browser acceptance issues a real four-system revision, replaces/archives equipment and edits customer/site/system metadata, then compares both the frozen revision and downloaded PDF SHA-256 with their original values.

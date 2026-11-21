@@ -69,6 +69,7 @@ export const itemSchema = z
   );
 export type ItemInput = z.infer<typeof itemSchema>;
 export type VisitItem = Omit<ItemInput, "itemId" | "followUp"> & {
+  systemId?: string;
   id: string;
   version: number;
   planned: boolean;

@@ -45,6 +45,25 @@ export type Database = {
     };
     Views: Record<string, never>;
     Functions: {
+      register_detail: {
+        Args: {
+          p_organization_id: string;
+          p_kind: string;
+          p_entity_id: string;
+        };
+        Returns: unknown;
+      };
+      register_command: {
+        Args: {
+          p_organization_id: string;
+          p_entity_id: string;
+          p_operation_id: string;
+          p_kind: string;
+          p_version: number;
+          p_data: unknown;
+        };
+        Returns: string;
+      };
       offline_assignment_ids: {
         Args: { p_organization_id: string };
         Returns: string[];

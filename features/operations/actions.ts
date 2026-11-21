@@ -30,6 +30,8 @@ export async function saveOperation(
     "room",
     "model",
     "serial",
+    "manufacturer",
+    "systemType",
     "visitType",
     "start",
     "end",

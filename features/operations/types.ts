@@ -1,5 +1,10 @@
 export type RegisterRow = {
   id: string;
+  version?: number;
+  archived_at?: string | null;
+  manufacturer?: string;
+  system_type?: string;
+  access_note?: string;
   name?: string;
   code?: string;
   customer_id?: string;

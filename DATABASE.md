@@ -65,7 +65,7 @@ References: [Supabase RLS](https://supabase.com/docs/guides/database/postgres/ro
 
 ## M2a register and scheduling
 
-Migrations 005–006 add customers, sites, systems, scheduled visits, visit items and assignees. Composite foreign keys enforce organization/site relationships. Normalized uppercase site codes are unique within an organization; system codes are unique within a site. Register editing, archiving and component units remain later work. M2b adds field outcomes and handover below.
+Migrations 005–006 add customers, sites, systems, scheduled visits, visit items and assignees. Composite foreign keys enforce organization/site relationships. Normalized uppercase site codes are unique within an organization; system codes are unique within a site. M5a adds versioned editing, archiving and component units as described below. M2b adds field outcomes and handover below.
 
 `save_operation(organization, operation, kind, data)` requires an active owner/coordinator and serializes against membership changes using the organization lock. Its actor-scoped operation receipt binds the exact payload to its generated entity ID; equal retries return the existing result, changed payloads conflict. Visit creation atomically writes the visit, distinct planned systems and active assignees. Site-local start/end timestamps are converted to instants using the site's IANA time zone. Nonexistent start times are rejected; ambiguous local times currently use PostgreSQL's standard-time interpretation. Recurrence/DST anchor rules remain M5.
 
@@ -165,3 +165,16 @@ IndexedDB schema 5 preserves all prior stores and adds partitioned `blocked` sou
 
 
 M4f retains IndexedDB schema 5 and server migrations through 040. Device cleanup removes all seven private stores' contents (including active metadata, withdrawn bundles and recovery history), scoped to a visit/partition for ordinary removal/discard or explicitly to all accounts for shared-device cleanup. The same transaction checks pending/attempted records before deleting. Server replay/reconciliation audits and business records are unaffected. See [FRONTEND.md](FRONTEND.md).
+
+
+### M5a equipment maintenance and history
+
+Migrations 041–042 add monotonic versions, archive/editor timestamps and editor identity to customers/sites/systems, site contact, and optional system manufacturer/type. Existing parent IDs, site relationships, visit items and legacy model/serial values remain intact. No transfer or hard-delete workflow is added. `units` carries organization/system composite keys, indoor/outdoor role, manufacturer/model/serial, creation/edit/archive timestamps, version and an optional same-system `replaces_id`. A replacement archives the old row and inserts a new ID in one transaction; archived units cannot be edited or revived. Current system metadata and component metadata are independent.
+
+`register_command` serializes on the organization lock, rechecks verified owner/coordinator membership, compares the entity version and binds the actor/operation ID to exact inputs in private append-only `register_events`. Equal retries return the same result; changed retries and stale edits return PT409. Component creation checks the parent system version; replacement compares the component version and preserves the system ID. Raw browser register/unit writes remain denied. Units permit office-scoped SELECT only; technicians use the narrow history RPC. Existing create operations use explicit columns and retain their actor-scoped receipts.
+
+Archiving is reversible for customer/site/system records and does not cascade archive flags or delete existing work. Insert triggers reject new child records, visits and visit items under archived ancestors. Existing scheduled/recorded items can still be completed. Restoring an ancestor does not override a child's own archive flag. Parent transfer remains excluded. Editing a site time zone does not move existing visit instants.
+
+`register_detail` scopes every read to the requested organization. Office staff can read customer/site/system details, children, components and submitted/issued service history. A technician must have an active membership with an explicit visit assignment containing the exact system; sibling systems and customer/site details are denied. Authorized history includes work, findings, no-access reasons, allowlisted readings/materials, field attribution/correction time and follow-up state. Internal notes, arbitrary JSON metadata and private delivery URLs are excluded. Field history does not grant access to the complete previous visit or its photos. Assignment withdrawal/revocation is checked on every read. Issued snapshots, archives and links remain immutable.
+
+The rollback suite `equipment_register.sql` covers replay/stale replacement, retained old components, immutable issued data, archived-parent restrictions, zero preservation, owner/coordinator access, denied raw writes and technician/unassigned/cross-tenant/revoked/anonymous boundaries. Browser acceptance additionally compares the original PDF checksum and races competing replacements.

@@ -94,6 +94,14 @@ export async function VisitWorkspace({
           <p>Sačuvajte svaki sistem pre predaje. Rad zahteva internet vezu.</p>
           {visit.items.map((item) => (
             <div key={item.id} id={`system-${item.id}`}>
+              {item.systemId && (
+                <Link
+                  className="button secondary mb-3"
+                  href={`/systems/${item.systemId}`}
+                >
+                  Istorija sistema · {item.code}
+                </Link>
+              )}
               <ItemForm
                 key={`${item.id}:${item.version}`}
                 item={item}
