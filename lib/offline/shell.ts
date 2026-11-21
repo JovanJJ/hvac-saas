@@ -28,6 +28,8 @@ export async function installShell() {
     scope: "/",
     updateViaCache: "none",
   });
+  if (registration.active && (registration.waiting || registration.installing))
+    throw new Error("shell_update_pending");
   const worker =
     registration.installing || registration.waiting || registration.active;
   if (!worker) throw new Error("shell_unavailable");

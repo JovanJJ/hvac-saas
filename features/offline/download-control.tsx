@@ -9,6 +9,7 @@ import {
   saveBundle,
   verifyIdentity,
 } from "@/lib/offline/storage";
+import { requestLifecycle } from "@/lib/offline/lifecycle";
 import { installShell, shellReady } from "@/lib/offline/shell";
 import type { OfflineBundle, OfflineIdentity } from "./model";
 export function DownloadControl({
@@ -80,7 +81,8 @@ export function DownloadControl({
       )
         throw new Error("identity_changed");
       if (remove) {
-        await removeBundle(identity, visitId);
+        if (!(await requestLifecycle({ kind: "remove", identity, visitId })))
+          return;
         setSaved(null);
         setReady(false);
         setMessage("Poseta je uklonjena sa telefona.");
@@ -113,9 +115,11 @@ export function DownloadControl({
           ? "Poseta ima neposlate nacrte. Sačuvani su na telefonu; otvorite ih pre osvežavanja ili uklanjanja kopije."
           : error instanceof Error && error.message === "offline_unsupported"
             ? "Za rad bez veze potreban je podržan pregledač i HTTPS veza (ili localhost)."
-            : remove
-              ? "Uklanjanje nije uspelo. Kopija je zadržana; pokušajte ponovo."
-              : "Preuzimanje nije uspelo. Proverite vezu, slobodnu memoriju i pristup poseti. Offline spremnost nije potvrđena.",
+            : error instanceof Error && error.message === "shell_update_pending"
+              ? "Nova verzija je preuzeta. Zatvorite sve prozore aplikacije, pa je ponovo otvorite. Sačuvani nacrti ostaju na uređaju."
+              : remove
+                ? "Uklanjanje nije uspelo. Kopija je zadržana; pokušajte ponovo."
+                : "Preuzimanje nije uspelo. Proverite vezu, slobodnu memoriju i pristup poseti. Offline spremnost nije potvrđena.",
       );
       if (
         !remove &&

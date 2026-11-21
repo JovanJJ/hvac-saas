@@ -9,6 +9,7 @@ import {
   removeLocalPhoto,
   retryLocalPhoto,
 } from "@/lib/offline/photo-storage";
+import { markUnsaved } from "@/lib/offline/lifecycle";
 import { changeEvent, getSubmission } from "@/lib/offline/storage";
 export function LocalPhotoPanel({
   identity,
@@ -57,6 +58,7 @@ export function LocalPhotoPanel({
       window.removeEventListener("storage", load);
     };
   }, [identity, bundle.visit.id, itemId]);
+  useEffect(() => () => markUnsaved(id, false), [id]);
   async function capture(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setBusy(true);
@@ -74,6 +76,7 @@ export function LocalPhotoPanel({
         String(data.get("visibility") ?? ""),
       );
       form.current?.reset();
+      markUnsaved(id, false);
       setMessage("Fotografija je sačuvana na telefonu i čeka slanje.");
     } catch (error) {
       setMessage(
@@ -104,7 +107,11 @@ export function LocalPhotoPanel({
           />
         ))}
       {editable && (
-        <form ref={form} onSubmit={capture}>
+        <form
+          ref={form}
+          onSubmit={capture}
+          onChange={() => markUnsaved(id, true)}
+        >
           <fieldset disabled={busy || submitting}>
             <legend>Nova fotografija</legend>
             <div className="field">

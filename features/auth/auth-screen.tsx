@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { DeviceCleanupControl } from "@/features/offline/lifecycle-control";
 import { Suspense } from "react";
 import { connection } from "next/server";
 import { AuthForm } from "./auth-form";
@@ -110,6 +111,7 @@ export async function AuthScreen({
           <Link href="/forgot-password">Zatraži novi link</Link>
         )}
       </nav>
+      <DeviceCleanupControl />
       {process.env.NODE_ENV === "development" && (
         <Link
           href="/preview"

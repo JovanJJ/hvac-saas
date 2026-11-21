@@ -427,43 +427,7 @@ export async function saveBundle(
   notifyChange({ kind: "bundle" });
 }
 export async function removeBundle(identity: OfflineIdentity, visitId: string) {
-  await guarded<void>(identity, "readwrite", (tx, _done, fail) => {
-    const pending = tx
-      .objectStore("drafts")
-      .index("visit")
-      .count([identity.userId, identity.organizationId, visitId]);
-    pending.onsuccess = () => {
-      const submission = tx
-        .objectStore("submissions")
-        .get([identity.userId, identity.organizationId, visitId]);
-      const photos = tx
-        .objectStore("photos")
-        .index("visit")
-        .getAll([identity.userId, identity.organizationId, visitId]);
-      photos.onsuccess = () => {
-        if (
-          pending.result ||
-          submission.result ||
-          (photos.result as LocalPhoto[]).some(photoPending)
-        )
-          fail(new Error("local_work_pending"));
-        else {
-          tx.objectStore("bundles").delete([
-            identity.userId,
-            identity.organizationId,
-            visitId,
-          ]);
-          for (const photo of photos.result as LocalPhoto[])
-            tx.objectStore("photos").delete([
-              identity.userId,
-              identity.organizationId,
-              visitId,
-              photo.id,
-            ]);
-        }
-      };
-    };
-  });
+  await lifecycleTransaction("readwrite", identity, visitId, "remove");
   notifyChange({ kind: "bundle" });
 }
 export async function listDrafts(
@@ -937,4 +901,113 @@ export async function hasReplayConflict(
           (photos.result as LocalPhoto[]).some((p) => p.errorStatus === 409),
       );
   });
+}
+
+// Lifecycle reads include withdrawn work and recovery history, but expose only counts.
+type DeviceRecord = {
+  userId: string;
+  organizationId: string;
+  visitId?: string;
+  visit?: { id: string };
+  attemptedAt?: string | null;
+  cleanupPending?: boolean;
+};
+const privateStores = [
+  "bundles",
+  "drafts",
+  "submissions",
+  "photos",
+  "blocked",
+  "recoveries",
+] as const;
+export type DeviceWork = {
+  records: number;
+  pending: number;
+  uncertain: number;
+};
+export async function deviceWork(
+  identity?: OfflineIdentity,
+  visitId?: string,
+): Promise<DeviceWork> {
+  return lifecycleTransaction("readonly", identity, visitId, false);
+}
+export async function discardDeviceWork(
+  identity?: OfflineIdentity,
+  visitId?: string,
+) {
+  await lifecycleTransaction("readwrite", identity, visitId, "discard");
+  // Cleanup already cleared active metadata atomically. Notification/lock failure cannot undo that commit.
+  if (!identity) await lockIdentity().catch(() => {});
+  notifyChange({ kind: "bundle" });
+}
+function lifecycleTransaction(
+  mode: IDBTransactionMode,
+  identity: OfflineIdentity | undefined,
+  visitId: string | undefined,
+  discard: false | "discard" | "remove",
+): Promise<DeviceWork> {
+  const run = (
+    tx: IDBTransaction,
+    done: (value: DeviceWork) => void,
+    fail: (error: Error) => void,
+  ) => {
+    const requests = privateStores.map((name) => ({
+      name,
+      request: identity
+        ? tx
+            .objectStore(name)
+            .index("partition")
+            .openCursor([identity.userId, identity.organizationId])
+        : tx.objectStore(name).openCursor(),
+    }));
+    const entries: { name: string; key: IDBValidKey; value: DeviceRecord }[] =
+      [];
+    let remaining = requests.length;
+    for (const { name, request } of requests)
+      request.onsuccess = () => {
+        const cursor = request.result;
+        if (cursor) {
+          const value = cursor.value as DeviceRecord;
+          if (
+            (!identity ||
+              (value.userId === identity.userId &&
+                value.organizationId === identity.organizationId)) &&
+            (!visitId || (value.visitId ?? value.visit?.id) === visitId)
+          )
+            entries.push({ name, key: cursor.primaryKey, value });
+          cursor.continue();
+          return;
+        }
+        if (--remaining) return;
+        let pending = 0,
+          uncertain = 0;
+        for (const { name, value } of entries) {
+          const work =
+            name === "drafts" ||
+            name === "submissions" ||
+            (name === "photos" &&
+              (photoPending(value as LocalPhoto) || value.cleanupPending));
+          if (work) {
+            pending++;
+            if (value.attemptedAt || value.cleanupPending) uncertain++;
+          }
+        }
+        // An attempted request may already have committed. Keep its retry identity and photo cleanup intent.
+        if (discard === "remove" && pending) {
+          fail(new Error("local_work_pending"));
+          return;
+        }
+        if (discard && uncertain) {
+          fail(new Error("attempted_work_pending"));
+          return;
+        }
+        if (discard) {
+          for (const entry of entries)
+            tx.objectStore(entry.name).delete(entry.key);
+          if (!identity) tx.objectStore("meta").clear();
+        }
+        done({ records: entries.length, pending, uncertain });
+      };
+  };
+  return identity ? guarded(identity, mode, run) : transaction(mode, run);
 }

@@ -238,8 +238,18 @@ test("durable field drafts preserve raw inputs, reject failed writes, freeze que
     await card
       .getByRole("button", { name: "Ukloni sa telefona", exact: true })
       .click();
-    await expect(card.getByRole("alert")).toContainText("neposlate nacrte");
+    await expect(page.getByRole("dialog")).toContainText(
+      "Neposlatih stavki: 2",
+    );
+    await page
+      .getByRole("dialog")
+      .getByRole("button", { name: "Zadrži posetu", exact: true })
+      .click();
     await page.getByRole("button", { name: "Odjavi se", exact: true }).click();
+    await page
+      .getByRole("dialog")
+      .getByRole("button", { name: "Zadrži na uređaju i nastavi", exact: true })
+      .click();
     await expect(page).toHaveURL(/\/sign-in/);
     await login(page, "owner.b@hvac.example.invalid");
     await page.goto("/today");

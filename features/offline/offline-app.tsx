@@ -2,6 +2,8 @@
 import { createRoot } from "react-dom/client";
 import { useEffect, useState } from "react";
 import { ReportTotals, SystemResult } from "@/features/reports/document";
+import { LifecycleHost, DeviceCleanupControl } from "./lifecycle-control";
+import { requestLifecycle } from "@/lib/offline/lifecycle";
 import { RecoveryPanel } from "./recovery-panel";
 import { RetainedWorkPanel } from "./retained-work";
 import { SyncControl } from "./sync-control";
@@ -13,7 +15,6 @@ import {
   activeIdentity,
   listBundles,
   listDrafts,
-  removeBundle,
   verifyIdentity,
   currentEpoch,
   changeEvent,
@@ -356,8 +357,14 @@ function DownloadedVisit({
         type="button"
         onClick={async () => {
           try {
-            await removeBundle(identity, bundle.visit.id);
-            removed();
+            if (
+              await requestLifecycle({
+                kind: "remove",
+                identity,
+                visitId: bundle.visit.id,
+              })
+            )
+              removed();
           } catch (e) {
             setError(
               e instanceof Error && e.message === "local_work_pending"
@@ -373,4 +380,10 @@ function DownloadedVisit({
     </article>
   );
 }
-createRoot(document.getElementById("app")!).render(<App />);
+createRoot(document.getElementById("app")!).render(
+  <>
+    <LifecycleHost />
+    <DeviceCleanupControl />
+    <App />
+  </>,
+);

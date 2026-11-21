@@ -225,6 +225,10 @@ test("lost save and submission responses replay once after restart; office sees 
     });
     await page.goto("/today");
     await page.getByRole("button", { name: "Odjavi se", exact: true }).click();
+    await page
+      .getByRole("dialog")
+      .getByRole("button", { name: "Zadrži na uređaju i nastavi", exact: true })
+      .click();
     await expect(page).toHaveURL(/\/sign-in/);
     await login(page, "owner.a@hvac.example.invalid");
     await page.goto(`/visits/${fixture.visitId}/review`);

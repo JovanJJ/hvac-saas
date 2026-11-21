@@ -12,7 +12,8 @@ self.addEventListener("install", (event) => {
           (path) => new Request(path, { cache: "reload", credentials: "omit" }),
         ),
       );
-      await self.skipWaiting();
+      // Updates wait for old clients to close. Never switch code underneath an active private editor.
+      // Initial installation activates automatically; IndexedDB is never cleared here.
     })(),
   );
 });

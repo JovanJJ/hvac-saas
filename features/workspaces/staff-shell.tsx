@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { DeviceCleanupControl } from "@/features/offline/lifecycle-control";
 import { Suspense } from "react";
 import { requireUser } from "@/features/auth/dal";
 import { signOut } from "@/features/auth/actions";
@@ -66,6 +67,7 @@ export function StaffShell({
             Odjavi se
           </button>
         </form>
+        <DeviceCleanupControl />
       </footer>
     </div>
   );

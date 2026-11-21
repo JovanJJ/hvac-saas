@@ -14,7 +14,18 @@ async function login(page: Page, email = "technician.a@hvac.example.invalid") {
     .getByLabel("Lozinka", { exact: true })
     .fill(process.env.SEED_PASSWORD!);
   await page.getByRole("button", { name: "Prijavi se", exact: true }).click();
-  await expect(page).toHaveURL(/\/(today|office)$/);
+  await expect
+    .poll(async () => {
+      const keep = page
+        .getByRole("dialog")
+        .getByRole("button", {
+          name: "Zadrži na uređaju i nastavi",
+          exact: true,
+        });
+      if (await keep.isVisible()) await keep.click();
+      return /\/(today|office)$/.test(page.url());
+    })
+    .toBe(true);
 }
 async function local(
   page: Page,

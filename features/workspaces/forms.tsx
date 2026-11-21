@@ -72,7 +72,12 @@ export function WorkspaceForm({
     initialMutationState,
   );
   return (
-    <form action={action} className="space-y-5" noValidate>
+    <form
+      action={action}
+      data-offline-boundary={workspace ? undefined : "switch"}
+      className="space-y-5"
+      noValidate
+    >
       {workspace ? (
         <>
           <input type="hidden" name="organizationId" value={workspace.id} />
@@ -286,7 +291,11 @@ export function AcceptInvitationForm({ token }: { token: string }) {
     initialMutationState,
   );
   return (
-    <form action={action} className="mt-5 space-y-4">
+    <form
+      action={action}
+      data-offline-boundary="switch"
+      className="mt-5 space-y-4"
+    >
       <input type="hidden" name="token" value={token} />
       <Feedback state={state} />
       <Submit pending={pending}>Prihvati poziv</Submit>

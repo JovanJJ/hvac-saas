@@ -132,7 +132,7 @@ async function capture(
     .click();
   return panel;
 }
-test("offline photo blobs survive restart, lost verification replays once and submission waits for verified evidence", async ({
+test("two offline system edits and photos survive restart, lost verification replays once and submission waits for evidence", async ({
   baseURL,
 }, info) => {
   test.setTimeout(240000);
@@ -180,6 +180,19 @@ test("offline photo blobs survive restart, lost verification replays once and su
     await page.goto(`/visits/${fixture.visitId}`, {
       waitUntil: "domcontentloaded",
     });
+    for (let index = 0; index < 2; index++) {
+      const editor = page.getByRole("region", { name: /^Unos / }).nth(index);
+      await editor
+        .getByLabel("Nalaz", { exact: true })
+        .fill(`Fiktivan M4f nalaz sistema ${index + 1}`);
+      await expect(editor.getByRole("status")).toContainText(
+        "Sačuvano na telefonu",
+      );
+      await editor
+        .getByRole("button", { name: "Pripremi za slanje", exact: true })
+        .click();
+      await expect(editor.getByRole("status")).toContainText("Čeka slanje");
+    }
     await capture(page, "KL-01", bytes, "Fiktivan čist filter");
     await capture(
       page,
@@ -220,6 +233,14 @@ test("offline photo blobs survive restart, lost verification replays once and su
       waitUntil: "domcontentloaded",
     });
     await expect.poll(() => stored(page, fixture.visitId)).toEqual(before);
+    for (let index = 0; index < 2; index++) {
+      await expect(
+        page
+          .getByRole("region", { name: /^Unos / })
+          .nth(index)
+          .getByLabel("Nalaz", { exact: true }),
+      ).toHaveValue(`Fiktivan M4f nalaz sistema ${index + 1}`);
+    }
     await page.screenshot({
       path: info.outputPath("restored-photo-outbox.png"),
       fullPage: true,
@@ -291,7 +312,15 @@ test("offline photo blobs survive restart, lost verification replays once and su
           [fixture.visitId],
         )
       ).rows[0].version,
-    ).toBe(fixture.version + 5);
+    ).toBe(fixture.version + 7);
+    expect(
+      (
+        await fixture.db.query(
+          "select count(*)::int as count from hvac_private.field_replay_receipts where organization_id=$1 and payload->>'visit'=$2",
+          [fixture.org, fixture.visitId],
+        )
+      ).rows[0].count,
+    ).toBe(3);
     await expect(page.getByRole("definition")).toHaveText(["4", "3", "2"]);
     expect(
       await page.evaluate(
@@ -320,9 +349,19 @@ test("offline photo blobs survive restart, lost verification replays once and su
     ).toBe(200);
     await page.goto("/today");
     await page.getByRole("button", { name: "Odjavi se", exact: true }).click();
+    await page
+      .getByRole("dialog")
+      .getByRole("button", { name: "Zadrži na uređaju i nastavi", exact: true })
+      .click();
     await expect(page).toHaveURL(/\/sign-in/);
     await login(page, "owner.a@hvac.example.invalid");
     await page.goto(`/visits/${fixture.visitId}/review`);
+    for (let index = 0; index < 2; index++)
+      await expect(
+        page.getByText(`Nalaz: Fiktivan M4f nalaz sistema ${index + 1}`, {
+          exact: true,
+        }),
+      ).toBeVisible();
     await expect(page.getByAltText("Fiktivan čist filter")).toBeVisible();
     await page.goto(`/visits/${fixture.visitId}/preview`);
     await expect(page.getByAltText("Fiktivan čist filter")).toBeVisible();

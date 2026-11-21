@@ -1,12 +1,14 @@
 "use client";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
+import { requestLifecycle } from "@/lib/offline/lifecycle";
+import { LifecycleHost } from "./lifecycle-control";
 import {
   currentEpoch,
-  lockIdentity,
   notifyChange,
   verifyIdentity,
 } from "@/lib/offline/storage";
 export function OfflineSessionGuard() {
+  const approved = useRef(new WeakSet<HTMLFormElement>());
   useEffect(() => {
     let previous = currentEpoch();
     let verifying = false;
@@ -38,12 +40,26 @@ export function OfflineSessionGuard() {
     function boundary(event: Event) {
       const form = event.target;
       if (
-        form instanceof HTMLFormElement &&
-        form.hasAttribute("data-offline-boundary")
+        !(form instanceof HTMLFormElement) ||
+        !form.hasAttribute("data-offline-boundary")
       )
-        void lockIdentity(
-          form.getAttribute("data-offline-boundary") === "discard",
-        ).catch(() => {});
+        return;
+      if (approved.current.delete(form)) return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      const submitter = (event as SubmitEvent).submitter;
+      void requestLifecycle({
+        kind: form.dataset.offlineBoundary === "switch" ? "switch" : "leave",
+      }).then((allowed) => {
+        if (!allowed || !form.isConnected) return;
+        approved.current.add(form);
+        form.requestSubmit(
+          submitter instanceof HTMLButtonElement ||
+            submitter instanceof HTMLInputElement
+            ? submitter
+            : undefined,
+        );
+      });
     }
     const timer = setInterval(() => {
       const epoch = currentEpoch();
@@ -71,5 +87,5 @@ export function OfflineSessionGuard() {
       window.removeEventListener("pageshow", verify);
     };
   }, []);
-  return null;
+  return <LifecycleHost />;
 }

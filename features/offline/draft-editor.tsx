@@ -5,6 +5,7 @@ import {
   actionLabels,
   readingLabels,
 } from "@/features/visits/model";
+import { markUnsaved } from "@/lib/offline/lifecycle";
 import { syncMessages } from "./sync-model";
 import type { OfflineBundle, OfflineIdentity } from "./model";
 import {
@@ -104,6 +105,11 @@ export function DraftEditor({
     "ready",
   );
   const [error, setError] = useState("");
+  const unsavedKey = useId();
+  useEffect(() => {
+    markUnsaved(unsavedKey, state === "saving" || state === "failed");
+    return () => markUnsaved(unsavedKey, false);
+  }, [state, unsavedKey]);
   const revision = useRef(draft?.revision ?? 0),
     generation = useRef(0),
     chain = useRef(Promise.resolve());
@@ -146,6 +152,7 @@ export function DraftEditor({
     return () => window.removeEventListener("storage", changed);
   }, [bundle.visit.id, item.id]);
   function patch(value: Partial<DraftValues>) {
+    markUnsaved(unsavedKey, true);
     const next = { ...values, ...value };
     setValues(next);
     setState("saving");
@@ -182,8 +189,9 @@ export function DraftEditor({
       !window.confirm("Obrisati neposlate izmene ovog sistema sa telefona?")
     )
       return;
-    await chain.current;
+    markUnsaved(unsavedKey, true);
     setState("saving");
+    await chain.current;
     setError("");
     try {
       const saved = await changeDraft(

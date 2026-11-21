@@ -73,12 +73,6 @@ export default function nextConfig(phase: string): NextConfig {
     turbopack: {
       // Exclude the fixture and its client graph from production output.
       resolveAlias: previewAlias,
-      rules: {
-        "*.css": {
-          loaders: ["@tailwindcss/turbopack"],
-          as: "*.css",
-        },
-      },
     },
   };
 }

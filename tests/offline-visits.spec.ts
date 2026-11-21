@@ -210,8 +210,8 @@ test("download survives a full browser restart offline; missing visits, removal 
     await again
       .getByRole("button", { name: "Ukloni sa telefona", exact: true })
       .click();
-    await expect(again.getByRole("alert")).toContainText(
-      "Uklanjanje nije uspelo",
+    await expect(page.getByRole("dialog").getByRole("alert")).toContainText(
+      "Memorija nije dostupna",
     );
     expect(await localBundles(page)).toHaveLength(1);
   } finally {
@@ -350,6 +350,10 @@ test("workspace and account changes isolate downloaded data; denied and withdraw
     await page
       .getByRole("button", { name: "Otvori radni prostor", exact: true })
       .click();
+    await page
+      .getByRole("dialog")
+      .getByRole("button", { name: "Zadrži na uređaju i nastavi", exact: true })
+      .click();
     await expect(page.getByText(orgNameB, { exact: true })).toBeVisible();
     await expect(
       oldTab.getByText(fixture.siteName, { exact: true }),
@@ -423,6 +427,10 @@ test("workspace and account changes isolate downloaded data; denied and withdraw
     ).toBeVisible();
     await page.goto("/today");
     await page.getByRole("button", { name: "Odjavi se", exact: true }).click();
+    await page
+      .getByRole("dialog")
+      .getByRole("button", { name: "Zadrži na uređaju i nastavi", exact: true })
+      .click();
     await expect(page).toHaveURL(/\/sign-in/);
     await login(page, "owner.b@hvac.example.invalid");
     await page.goto("/today");
