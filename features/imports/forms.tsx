@@ -1,6 +1,7 @@
 "use client";
 import { useActionState, useState } from "react";
 import Link from "next/link";
+import { ImportApplyForm, ImportApplicationResult } from "./apply-form";
 import { SelectField } from "@/components/ui/select-field";
 import { previewImport, uploadImport, type ImportState } from "./actions";
 import {
@@ -145,6 +146,23 @@ export function ImportMappingForm({
           .sort()
           .map(([row, choice]) => [row, Object.entries(choice).sort()]),
       );
+  if (detail.application)
+    return (
+      <>
+        <ImportApplicationResult application={detail.application} />
+        <details className="my-5">
+          <summary>Prikaži primenjeni pregled</summary>
+          <p>
+            Ovo su vrednosti pregledane pre primene. Rezultat upisa je prikazan
+            iznad.
+          </p>
+          {preview?.rows.map((row) => (
+            <RowResult key={row.number} row={row} />
+          ))}
+        </details>
+        <Link href="/imports">Učitaj novi fajl</Link>
+      </>
+    );
   return (
     <>
       <form action={action} onReset={(e) => e.preventDefault()}>
@@ -306,8 +324,7 @@ export function ImportMappingForm({
             greškama: {preview.rows.filter((r) => r.action === "error").length}
           </p>
           <p>
-            Registar nije promenjen. Primena uvoza još nije dostupna. Za
-            ispravku sadržaja{" "}
+            Registar nije promenjen. Za ispravku sadržaja{" "}
             <Link href="/imports">
               učitajte ispravljen fajl kao novi pregled
             </Link>
@@ -320,6 +337,19 @@ export function ImportMappingForm({
           {preview.rows.map((row) => (
             <RowResult row={row} key={row.number} />
           ))}
+          {reviewed && preview.rows.every((row) => row.action !== "error") ? (
+            <ImportApplyForm
+              key={`${preview.id}:${preview.digest}`}
+              batchId={detail.id}
+              preview={preview}
+              operationId={operationId}
+            />
+          ) : (
+            <p>
+              Pre primene ispravite sve greške i sačuvajte pregled trenutnog
+              mapiranja.
+            </p>
+          )}
         </section>
       )}
     </>

@@ -6,6 +6,7 @@ import { z } from "zod";
 import { requireWorkspace } from "@/features/workspaces/dal";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { parseImport } from "./parser";
+import { applyReviewedImport } from "./dal";
 import { importFields, importLimits, type ImportMapping } from "./model";
 export type ImportState = { message?: string; success?: boolean };
 export async function uploadImport(
@@ -108,4 +109,48 @@ export async function previewImport(
     success: true,
     message: "Pregled je sačuvan. Registar nije promenjen.",
   };
+}
+
+export async function applyImport(
+  _state: ImportState,
+  form: FormData,
+): Promise<ImportState> {
+  const context = await requireWorkspace(["owner", "coordinator"]);
+  const input = z
+    .object({
+      batchId: z.uuid(),
+      previewId: z.uuid(),
+      operationId: z.uuid(),
+      digest: z.string().regex(/^[a-f0-9]{64}$/),
+    })
+    .safeParse(Object.fromEntries(form));
+  if (!input.success)
+    return { message: "Neispravan pregled. Ponovite pregled pre potvrde." };
+  if (form.get("confirmed") !== "on")
+    return { message: "Potvrdite pregledane podatke pre upisa u registar." };
+  const { error } = await applyReviewedImport(
+    context.workspace.organization.id,
+    input.data,
+  );
+  if (error)
+    return {
+      message:
+        error.code === "PT409"
+          ? "Pregled ili podaci u registru su promenjeni. Ništa nije upisano ovim zahtevom. Osvežite stranicu i ponovite pregled pre potvrde."
+          : error.code === "22023"
+            ? "Uvoz nije primenjen. Ispravite sve redove i ponovite pregled."
+            : "Primena nije potvrđena. Osvežite stranicu da proverite rezultat ili ponovite isti zahtev; potvrđen uvoz neće biti dupliran.",
+    };
+  for (const path of [
+    "/imports",
+    "/systems",
+    "/sites",
+    "/customers",
+    "/visits",
+    "/today",
+    "/office",
+    "/schedule",
+  ])
+    revalidatePath(path, "layout");
+  return { success: true, message: "Uvoz je primenjen. Rezultat je sačuvan." };
 }

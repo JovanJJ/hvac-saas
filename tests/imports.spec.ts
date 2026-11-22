@@ -115,10 +115,7 @@ test("CSV preview resolves ambiguity, remaps columns and leaves register and fin
       "Pronađen sistem",
     );
     await expect(
-      page.getByText(
-        "Registar nije promenjen. Primena uvoza još nije dostupna.",
-        { exact: false },
-      ),
+      page.getByText("Registar nije promenjen.", { exact: false }),
     ).toBeVisible();
     expect(
       await page.evaluate(

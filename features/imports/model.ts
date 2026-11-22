@@ -39,7 +39,22 @@ export type ImportPreview = {
   rows: ImportRow[];
   createdAt: string;
 };
+export type ImportApplication = {
+  created: number;
+  updated: number;
+  skipped: number;
+  appliedAt: string;
+  digest: string;
+  rows: {
+    number: number;
+    systemId: string;
+    siteId: string;
+    code: string;
+    action: "created" | "updated" | "skipped";
+  }[];
+};
 export type ImportDetail = {
+  application: ImportApplication | null;
   id: string;
   filename: string;
   sourceDigest: string;
