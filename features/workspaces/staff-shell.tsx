@@ -43,6 +43,7 @@ export function StaffShell({
               <Link href="/customers">Klijenti</Link>
               <Link href="/sites">Lokacije</Link>
               <Link href="/systems">Sistemi</Link>
+              <Link href="/imports">Uvoz opreme</Link>
               <Link href="/schedule">Raspored</Link>
               <Link href="/visits/new">Zakaži posetu</Link>
             </>
