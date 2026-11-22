@@ -1,0 +1,16 @@
+import assert from "node:assert/strict";
+import { readQueueFilters, queueLink } from "../../features/follow-ups/queue-model";
+const site = "a1000000-0000-4000-8000-000000000010";
+const parsed = readQueueFilters({ site: [site, "invalid"], due: "overdue", dependency: "required", owner: site, page: "2" });
+assert.equal(parsed.invalid, false);
+assert.equal(parsed.filters.site, site);
+const url = new URL(queueLink(parsed.filters, { page: 3 }), "https://example.invalid");
+assert.equal(url.searchParams.get("dependency"), "required");
+assert.equal(url.searchParams.get("due"), "overdue");
+assert.equal(url.searchParams.get("owner"), site);
+assert.equal(url.searchParams.get("page"), "3");
+assert.equal(readQueueFilters({ page: "0" }).invalid, true);
+assert.equal(readQueueFilters({ site: "invalid" }).invalid, true);
+assert.equal(readQueueFilters({ queue: "maintenance", state: "quote" }).invalid, true);
+assert.equal(readQueueFilters({ queue: "maintenance", state: "cancelled" }).invalid, false);
+assert.equal(readQueueFilters({}).filters.state, "pending");

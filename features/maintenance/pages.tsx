@@ -36,8 +36,8 @@ export async function PlansContent({
     <>
       <h1>Planovi održavanja</h1>
       <p>
-        Plan čuva pravilo ponavljanja, sisteme i tim. Automatsko kreiranje
-        poseta još nije uključeno.
+        Plan čuva pravilo ponavljanja, sisteme i tim. Aktivne planove obrađuje
+        worker i priprema posete za narednih 90 dana.
       </p>
       <Link className="button primary my-5" href="/maintenance/new">
         Novi plan održavanja

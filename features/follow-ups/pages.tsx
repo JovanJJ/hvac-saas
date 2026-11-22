@@ -6,38 +6,6 @@ import { ownerRoster } from "@/features/workspaces/dal";
 import { followUps } from "./dal";
 import { FollowUpForm } from "./forms";
 import { taskLabels } from "./model";
-export async function FollowUpList() {
-  const { actions } = await followUps();
-  return (
-    <>
-      <h1>Sledeće radnje</h1>
-      <p>
-        Otvorene: {actions.filter((a) => a.state === "open").length} · Završene:{" "}
-        {actions.filter((a) => a.state === "completed").length}
-      </p>
-      {!actions.length && <p>Nema radnji sa predatih poseta.</p>}
-      {actions.map((task) => (
-        <article key={task.id} className="card my-5">
-          <h2>
-            <Link href={`/office/actions/${task.id}`}>
-              {taskLabels[task.kind]} · {task.code}
-            </Link>
-          </h2>
-          <p>
-            {task.customer} · {task.site} · {task.room}
-          </p>
-          <p>{task.finding || task.noAccessReason || task.work}</p>
-          <p>
-            {task.state === "open" ? "Otvoreno" : "Završeno"} ·{" "}
-            {task.owner || "Nedostaje odgovoran"} · Rok:{" "}
-            {task.dueDate || "Nedostaje"}
-          </p>
-          {task.returnVisitId && <p>Povratna poseta je zakazana.</p>}
-        </article>
-      ))}
-    </>
-  );
-}
 export async function FollowUpDetail({ actionId }: { actionId: string }) {
   if (!z.string().uuid().safeParse(actionId).success) notFound();
   const { context, actions } = await followUps();

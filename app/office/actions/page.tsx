@@ -1,9 +1,11 @@
 import { StaffPage } from "@/features/workspaces/staff-shell";
-import { FollowUpList } from "@/features/follow-ups/pages";
-export default function Page() {
+import { WorkQueues } from "@/features/follow-ups/queue";
+export default function Page({ searchParams }: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   return (
     <StaffPage path="/office/actions" roles={["owner", "coordinator"]}>
-      {() => <FollowUpList />}
+      {() => <WorkQueues searchParams={searchParams} />}
     </StaffPage>
   );
 }

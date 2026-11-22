@@ -236,6 +236,7 @@ export type Database = {
         Args: { p_organization_id: string; p_visit_id: string };
         Returns: unknown;
       };
+      office_work_queue: { Args: { p_organization_id: string; p_filters?: unknown }; Returns: unknown };
       follow_up_list: { Args: { p_organization_id: string }; Returns: unknown };
       follow_up_command: {
         Args: {
