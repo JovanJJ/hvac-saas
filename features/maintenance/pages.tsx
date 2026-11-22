@@ -1,8 +1,14 @@
 import Link from "next/link";
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
-import { maintenanceDetail, maintenanceEditor, maintenanceList } from "./dal";
+import {
+  maintenanceDetail,
+  maintenanceEditor,
+  maintenanceList,
+  generationState,
+} from "./dal";
 import { PlanForm, PlanToggle } from "./form";
+import { PlanGeneration } from "./generation";
 import { Occurrences } from "./occurrences";
 export type PlanSearch = Record<string, string | string[] | undefined>;
 const first = (query: PlanSearch, key: string) =>
@@ -136,12 +142,25 @@ export async function NewPlanContent({
 }
 export async function PlanContent({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<PlanSearch>;
 }) {
   const { id } = await params;
   const detail = await maintenanceDetail(id);
-  const options = await maintenanceEditor(detail.siteId);
+  const query = await searchParams;
+  const page = z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(1000)
+    .safeParse(first(query, "visitsPage") || 1);
+  const visitsPage = page.success ? page.data : 1;
+  const [options, generation] = await Promise.all([
+    maintenanceEditor(detail.siteId),
+    generationState(id, visitsPage),
+  ]);
   return (
     <>
       <Link href="/maintenance">Nazad na planove</Link>
@@ -172,10 +191,16 @@ export async function PlanContent({
         detail={detail}
         operationId={randomUUID()}
       />
-      <p>
-        Izmena i pauziranje plana ne menjaju niti brišu postojeće posete.
-        Generisanje poseta biće dodato odvojeno.
-      </p>
+      <p>Izmena i pauziranje plana ne menjaju niti brišu postojeće posete.</p>
+      <PlanGeneration
+        plan={detail}
+        data={generation}
+        operationId={randomUUID()}
+        page={visitsPage}
+        retryOperations={Object.fromEntries(
+          generation.jobs.map((job) => [job.id, randomUUID()]),
+        )}
+      />
       <details className="my-5">
         <summary>Termini sačuvanog plana</summary>
         <Occurrences

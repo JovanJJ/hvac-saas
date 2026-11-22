@@ -171,3 +171,19 @@ Expired sessions show **Prijavi se ponovo**; use the original account/workspace.
 Verification: `npm run test:db`, `npm run typecheck`, `npm run lint`, `npm test`, `npm run build -- --webpack`, then production `npm run test:e2e -- tests/offline-recovery.spec.ts tests/offline-photos.spec.ts tests/offline-sync.spec.ts tests/offline-drafts.spec.ts tests/offline-visits.spec.ts tests/visit-handover.spec.ts tests/evidence.spec.ts --workers=2`. Tests create/clean fictional fixtures only. Existing user visits are not submitted or changed automatically by this implementation; recovery requires the technician's review.
 
 M4e checks actually run: migration 040 applied; all 16 rollback SQL suites; type checking, lint and six unit files; production Webpack build; a 30-case production regression across recovery/photos/replay/downloads/online evidence/handover at 390px/1440px, followed by an eight-case recovery recheck after offline-error feedback changes. Checks covered independent technicians, same-item comparison and fresh IDs, a server edit after review, the stale aggregate caused by online photo changes, lost reconciliation responses, atomic failure/retention when saving a recovery choice, server adoption without changing authorship, expired-session pause, another account, withdrawn assignment with retained Blob counts and authorized restoration using the original ID. Phone/desktop comparison and retained-work screenshots were inspected; 4/3/2 totals and no horizontal overflow were verified. Fixtures/provider assets were fictional and cleaned up. No existing user visit was automatically submitted or rewritten. Physical-device/shared-device lifecycle validation remains M4f.
+
+## Recurring maintenance visits (M5f)
+
+After applying migrations, start or restart the existing worker with the updated source:
+
+~~~sh
+npm run worker:reports
+~~~
+
+Despite the legacy script name, its normal loop now handles both PDF rendering and recurring visits. It uses the existing `REPORT_WORKER_EMAIL` / `REPORT_WORKER_PASSWORD` and Supabase configuration; no new environment variable is required. For Docker deployments rebuild/restart the existing service with `docker compose -f compose.worker.yml up -d --build`. The Next.js web process does not start this consumer.
+
+Open **Planovi održavanja**, save/resume an active plan and inspect **Priprema ponavljajućih poseta**. The worker prepares the next 90 local dates and scans due plans daily. **Pripremi posete** can request another future window of at most 90 inclusive dates within the next year. **Poslednji zahtevi za pripremu** shows state/failure/retry; **Posete plana** links to created attendance. Assigned technicians see applicable dates in Today. With the consumer stopped, requests remain durably queued until it resumes.
+
+For a separate maintenance-only process use `npm run worker:maintenance`. To exercise only one fictional plan use `npm run worker:reports -- --plan PLAN_UUID --once`; `--revision REVISION_UUID --once` remains PDF-only. Do not combine plan and revision filters. Multiple consumers safely share leases and unique occurrence keys. Stop broad continuous consumers while verifying queued states in integration tests; acceptance workers are restricted to their own fictional plan.
+
+Changing a plan affects new ungenerated dates. Existing visits, including scheduled/cancelled ones, are retained; use **Raspored** for explicit reschedule/cancellation. A cancelled plan/date is not generated again. Past dates that elapsed while waiting are skipped rather than backfilled. New attendance contains pending outcomes, never an automatic claim of inspection or service.

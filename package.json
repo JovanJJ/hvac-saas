@@ -26,7 +26,8 @@
     "predev": "npm run offline:build",
     "prebuild": "npm run offline:build",
     "pretypecheck": "npm run offline:build",
-    "pretest:e2e": "npm run offline:build"
+    "pretest:e2e": "npm run offline:build",
+    "worker:maintenance": "tsx --env-file=.env src/worker/main.ts --maintenance-only"
   },
   "dependencies": {
     "@next/env": "16.4.6",

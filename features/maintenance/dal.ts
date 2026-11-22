@@ -57,3 +57,16 @@ export async function maintenanceEditor(siteId?: string) {
     }),
   } satisfies EditorOptions;
 }
+
+export async function generationState(id: string, page = 1) {
+  const context = await requireWorkspace(["owner", "coordinator"]);
+  const client = await createSupabaseServerClient();
+  const { data, error } = await client.rpc("maintenance_generation_state", {
+    p_organization_id: context.workspace.organization.id,
+    p_plan_id: id,
+    p_page: page,
+  });
+  if (error?.code === "42501") notFound();
+  if (error) throw new Error("Priprema poseta trenutno nije dostupna.");
+  return data as unknown as import("./generation-model").GenerationState;
+}

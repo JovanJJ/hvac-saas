@@ -45,6 +45,32 @@ export type Database = {
     };
     Views: Record<string, never>;
     Functions: {
+      maintenance_generation_command: {
+        Args: {
+          p_organization_id: string;
+          p_plan_id: string;
+          p_operation_id: string;
+          p_kind: string;
+          p_version: number;
+          p_data: unknown;
+        };
+        Returns: string;
+      };
+      maintenance_generation_state: {
+        Args: { p_organization_id: string; p_plan_id: string; p_page?: number };
+        Returns: unknown;
+      };
+      maintenance_tick: { Args: { p_plan_id?: string }; Returns: number };
+      maintenance_claim: { Args: { p_plan_id?: string }; Returns: unknown };
+      maintenance_execute: {
+        Args: { p_job_id: string; p_lease_token: string };
+        Returns: unknown;
+      };
+      maintenance_fail: {
+        Args: { p_job_id: string; p_lease_token: string };
+        Returns: undefined;
+      };
+
       maintenance_plan_command: {
         Args: {
           p_organization_id: string;

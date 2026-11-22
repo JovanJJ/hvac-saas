@@ -17,6 +17,9 @@ export type RegisterRow = {
   contact?: string;
 };
 export type ScheduledVisit = {
+  planId?: string;
+  planName?: string;
+  intendedDate?: string;
   status?: import("@/features/visits/model").VisitBundle["status"];
   cancellationReason?: string;
   assigned: boolean;

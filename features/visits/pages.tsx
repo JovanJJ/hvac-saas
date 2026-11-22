@@ -57,6 +57,17 @@ export async function VisitWorkspace({
         · {visit.contact}
       </p>
       <p>Stanje: {visitStatusLabels[visit.status]}</p>
+      {visit.planId && (
+        <p>
+          {context.workspace.role !== "technician" ? (
+            <Link href={`/maintenance/${visit.planId}`}>
+              Plan održavanja: {visit.planName}
+            </Link>
+          ) : (
+            <>Planirano održavanje · {visit.intendedDate}</>
+          )}
+        </p>
+      )}
       {visit.status === "cancelled" && (
         <p className="card">Razlog otkazivanja: {visit.cancellationReason}</p>
       )}

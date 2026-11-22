@@ -37,6 +37,14 @@ async function cleanup(
       [fixture.org, fixture.siteId],
     )
   ).rows.map((r) => r.id);
+  await fixture.db.query(
+    "delete from hvac_private.maintenance_generation_receipts where organization_id=$1 and job_id in(select id from hvac_private.maintenance_jobs where organization_id=$1 and plan_id=any($2::uuid[]))",
+    [fixture.org, ids],
+  );
+  await fixture.db.query(
+    "delete from hvac_private.maintenance_jobs where organization_id=$1 and plan_id=any($2::uuid[])",
+    [fixture.org, ids],
+  );
   for (const table of [
     "hvac_private.maintenance_events",
     "public.plan_systems",

@@ -9,7 +9,10 @@ export function Occurrences({
   return (
     <section aria-label={title} className="my-5 space-y-4">
       <h2>{title}</h2>
-      <p>Ovo je pregled termina. Posete još nisu kreirane.</p>
+      <p>
+        Predlog termina prema podešavanjima plana. Kreirane posete su prikazane
+        odvojeno.
+      </p>
       <ol className="m-0 list-none p-0 space-y-4">
         {rows.map((row) => (
           <li

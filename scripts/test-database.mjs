@@ -18,6 +18,7 @@ await withDatabase(async (db) => {
     "import_preview.sql",
     "import_apply.sql",
     "maintenance_plans.sql",
+    "recurring_visits.sql",
     "visit_handover.sql",
     "private_evidence.sql",
     "report_issuance.sql",

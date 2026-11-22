@@ -18,6 +18,17 @@ export function VisitList({
         <article key={visit.id} className="card min-w-0 break-words">
           <h2>{visit.site}</h2>
           <p>{visit.address}</p>
+          {visit.planId && (
+            <p>
+              {manageSchedule ? (
+                <Link href={`/maintenance/${visit.planId}`}>
+                  Plan održavanja: {visit.planName}
+                </Link>
+              ) : (
+                <>Planirano održavanje · {visit.intendedDate}</>
+              )}
+            </p>
+          )}
           {visit.status && <p>Stanje: {visitStatusLabels[visit.status]}</p>}
           {visit.cancellationReason && (
             <p>Razlog otkazivanja: {visit.cancellationReason}</p>

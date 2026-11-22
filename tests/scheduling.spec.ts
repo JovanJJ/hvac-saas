@@ -180,6 +180,15 @@ test("office moves and filters a visit, reassigns offline work and cancels witho
       .getByRole("button", { name: "Prikaži raspored", exact: true })
       .click();
     await expect(scheduled).toBeVisible();
+    const weekBoard = page.getByRole("region", { name: "Nedeljni raspored", exact: true });
+    await expect(weekBoard.locator(":scope > section")).toHaveCount(7);
+    await expect(weekBoard.getByText("Broj poseta: 0", { exact: true })).toHaveCount(6);
+    await page.getByRole("link", { name: "Dnevni pregled", exact: true }).click();
+    await expect(weekBoard).toHaveCount(0);
+    expect(new URL(page.url()).searchParams.get("site")).toBe(fixture.siteId);
+    await page.getByRole("link", { name: "Nedeljni pregled", exact: true }).click();
+    await expect(weekBoard).toBeVisible();
+    await expect(scheduled).toBeVisible();
     await filters
       .getByRole("combobox", { name: "Član tima", exact: true })
       .selectOption({ label: "owner.a@hvac.example.invalid" });

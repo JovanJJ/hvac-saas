@@ -283,13 +283,18 @@ export function PlanToggle({
 }) {
   const [state, action, pending] = useActionState(planAction, {} as PlanState);
   const label = detail.enabled ? "Pauziraj plan" : "Nastavi plan";
+  const [base] = useState({
+    operationId,
+    version: detail.version,
+    enabled: !detail.enabled,
+  });
   return (
     <form action={action} className="my-5 space-y-3" aria-label={label}>
       <input type="hidden" name="intent" value="set_enabled" />
       <input type="hidden" name="planId" value={detail.id} />
-      <input type="hidden" name="operationId" value={operationId} />
-      <input type="hidden" name="version" value={detail.version} />
-      <input type="hidden" name="enabled" value={String(!detail.enabled)} />
+      <input type="hidden" name="operationId" value={base.operationId} />
+      <input type="hidden" name="version" value={base.version} />
+      <input type="hidden" name="enabled" value={String(base.enabled)} />
       <button className="button secondary" disabled={pending}>
         {pending ? "Čuvanje…" : label}
       </button>

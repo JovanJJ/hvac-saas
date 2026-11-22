@@ -101,6 +101,9 @@ export type VisitItem = Omit<ItemInput, "itemId" | "followUp"> & {
   correctedByLabel?: string | null;
 };
 export type VisitBundle = {
+  planId?: string;
+  planName?: string;
+  intendedDate?: string;
   technicians: string[];
   id: string;
   version: number;

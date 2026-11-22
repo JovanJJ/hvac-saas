@@ -7,6 +7,7 @@ import { VisitList } from "@/features/operations/visit-list";
 import { visitStatusLabels } from "@/features/visits/model";
 import { scheduleSnapshot, scheduleDetail } from "./dal";
 import { ScheduleChangeForm } from "./form";
+import { ScheduleWeek } from "./week";
 import {
   changeLabels,
   scheduleLink,
@@ -27,6 +28,18 @@ export async function ScheduleBoard({
       <p>
         Datumi i vremena poseta prikazani su u vremenskoj zoni njihove lokacije.
       </p>
+      <nav aria-label="Prikaz rasporeda" className="my-5 flex flex-wrap gap-3">
+        {(["day", "week"] as const).map((view) => (
+          <Link
+            key={view}
+            href={scheduleLink({ ...filters, view }, filters.date)}
+            className={`button ${filters.view === view ? "primary" : "secondary"}`}
+            aria-current={filters.view === view ? "page" : undefined}
+          >
+            {view === "week" ? "Nedeljni pregled" : "Dnevni pregled"}
+          </Link>
+        ))}
+      </nav>
       {filters.invalid && (
         <p role="alert">
           Filteri nisu ispravni. Prikazan je današnji raspored.
@@ -120,7 +133,11 @@ export async function ScheduleBoard({
           {filters.view === "week" ? "Sledeća nedelja" : "Sledeći dan"}
         </Link>
       </nav>
-      <VisitList visits={visits} manageSchedule />
+      {filters.view === "week" ? (
+        <ScheduleWeek visits={visits} filters={filters} />
+      ) : (
+        <VisitList visits={visits} manageSchedule />
+      )}
     </>
   );
 }
