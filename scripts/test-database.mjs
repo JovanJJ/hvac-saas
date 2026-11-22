@@ -17,6 +17,7 @@ await withDatabase(async (db) => {
     "schedule_changes.sql",
     "import_preview.sql",
     "import_apply.sql",
+    "maintenance_plans.sql",
     "visit_handover.sql",
     "private_evidence.sql",
     "report_issuance.sql",

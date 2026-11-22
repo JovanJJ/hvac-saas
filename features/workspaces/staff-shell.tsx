@@ -45,6 +45,7 @@ export function StaffShell({
               <Link href="/systems">Sistemi</Link>
               <Link href="/imports">Uvoz opreme</Link>
               <Link href="/schedule">Raspored</Link>
+              <Link href="/maintenance">Planovi održavanja</Link>
               <Link href="/visits/new">Zakaži posetu</Link>
             </>
           )}
