@@ -2,20 +2,26 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { publicAccountLink } from "./account-link";
 import { PublicNavigation } from "./public-navigation";
+import { demoAvailable } from "./availability";
+import { PublicContainer } from "./components";
 import "./public-site.css";
 
-// Unfinished demo destination is explicitly local-only until UX07.
-const demoAvailable = process.env.NODE_ENV === "development";
-
-async function AccountNavigation() {
-  return <PublicNavigation account={await publicAccountLink()} demoAvailable={demoAvailable} />;
+async function AccountAction() {
+  const account = await publicAccountLink();
+  return (
+    <Link href={account?.href ?? "/sign-in"} prefetch={false}>
+      {account?.label ?? "Prijava"}
+    </Link>
+  );
 }
 
-async function FooterAccount() {
-  const account = await publicAccountLink();
-  return account
-    ? <Link href={account.href} prefetch={false}>{account.label}</Link>
-    : <><Link href="/sign-in" prefetch={false}>Prijava</Link><Link href="/sign-up" prefetch={false}>Registracija</Link></>;
+async function RegistrationAction() {
+  if (await publicAccountLink()) return null;
+  return <Link href="/sign-up" prefetch={false}>Registracija</Link>;
+}
+
+function AccountPending() {
+  return <span className="public-account-pending" role="status">Provera naloga…</span>;
 }
 
 export function PublicLayout({ children }: { children: React.ReactNode }) {
@@ -23,22 +29,37 @@ export function PublicLayout({ children }: { children: React.ReactNode }) {
     <div className="public-site">
       <a href="#public-content" className="public-skip-link">Pređi na sadržaj</a>
       <header className="public-header">
-        <div className="public-container public-header-inner">
-          <Link href="/" className="public-brand" aria-label="teren. — početna">teren<span>.</span></Link>
-          <Suspense fallback={<PublicNavigation account={null} pending demoAvailable={demoAvailable} />}>
-            <AccountNavigation />
-          </Suspense>
-        </div>
+        <PublicContainer className="public-header-inner">
+          <Link href="/" className="public-brand" aria-label="teren. — početna">
+            teren<span>.</span>
+          </Link>
+          {/* Stream only account links, preserving the interactive menu and its state. */}
+          <PublicNavigation
+            demoAvailable={demoAvailable}
+            accountAction={
+              <Suspense fallback={<AccountPending />}><AccountAction /></Suspense>
+            }
+            registrationAction={
+              <Suspense fallback={null}><RegistrationAction /></Suspense>
+            }
+          />
+        </PublicContainer>
       </header>
-      <main id="public-content" tabIndex={-1} className="public-container public-main">{children}</main>
+      <PublicContainer as="main" id="public-content" tabIndex={-1} className="public-main">
+        {children}
+      </PublicContainer>
       <footer className="public-footer">
-        <div className="public-container public-footer-inner">
-          <div><Link href="/" className="public-brand">teren<span>.</span></Link><p>Softver za servisere klima-uređaja</p></div>
+        <PublicContainer className="public-footer-inner">
+          <div>
+            <Link href="/" className="public-brand">teren<span>.</span></Link>
+            <p>Softver za servisere klima-uređaja</p>
+          </div>
           <nav aria-label="Navigacija u podnožju">
             {demoAvailable && <Link href="/demo">Demonstracija</Link>}
-            <Suspense fallback={<span role="status">Provera naloga…</span>}><FooterAccount /></Suspense>
+            <Suspense fallback={<AccountPending />}><AccountAction /></Suspense>
+            <Suspense fallback={null}><RegistrationAction /></Suspense>
           </nav>
-        </div>
+        </PublicContainer>
       </footer>
     </div>
   );

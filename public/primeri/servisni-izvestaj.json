@@ -1,0 +1,45 @@
+{
+  "reference": "RN-2026-0142",
+  "revision": 1,
+  "fictional": true,
+  "totals": {
+    "planned": 4,
+    "inspected": 3,
+    "actions": 2
+  },
+  "pages": 2,
+  "renderer": "service-report-v1/chromium-1255/2",
+  "pdf": {
+    "src": "/primeri/servisni-izvestaj.pdf",
+    "sha256": "73beaa04f2dc405ce56043ddde3ed135a8b4a3fa031f4874758034bf4b43e18e",
+    "bytes": 34795
+  },
+  "previews": {
+    "desktop": {
+      "src": "/primeri/servisni-izvestaj-desktop.webp",
+      "width": 1200,
+      "height": 864,
+      "sha256": "efc6eaae3b1a01b3fb414ce1aecd650c8a45a6c698581deda023289f0a4999c6"
+    },
+    "mobile": {
+      "src": "/primeri/servisni-izvestaj-mobile.webp",
+      "width": 900,
+      "height": 236,
+      "sha256": "18ab5bfed4f4bdce2f5ccfa4abf5a469b91400bff076ee20e193bc6cdeda15d9"
+    }
+  },
+  "crops": {
+    "desktop": {
+      "left": 80,
+      "top": 60,
+      "width": 1030,
+      "height": 742
+    },
+    "mobile": {
+      "left": 80,
+      "top": 440,
+      "width": 1030,
+      "height": 270
+    }
+  }
+}

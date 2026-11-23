@@ -57,3 +57,154 @@
   .public-site .public-intro > p:last-child { font-size: 18px; }
   .public-site .public-footer-inner { align-items: flex-start; flex-direction: column; gap: 20px; }
 }
+
+/* Landing sections stay server-rendered; only the shared navigation is interactive. */
+.public-site .public-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 48fr) minmax(0, 52fr);
+  align-items: center;
+  gap: 48px;
+  padding-block: 8px 56px;
+}
+.public-site .public-hero-copy { min-width: 0; }
+.public-site .public-hero h1 {
+  font-size: clamp(36px, 3.7vw, 54px);
+  line-height: 1.24;
+  letter-spacing: -1.4px;
+  text-wrap: balance;
+}
+.public-site .public-lead {
+  color: var(--public-muted);
+  font-size: 19px;
+  line-height: 1.7;
+  margin-top: 30px;
+}
+.public-site .public-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 30px;
+}
+.public-site .public-button {
+  display: inline-flex;
+  align-items: center;
+  min-height: 48px;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.4;
+  text-decoration: none;
+  text-align: center;
+}
+.public-site .public-button-secondary {
+  color: var(--public-ink);
+  background: white;
+  border: 1px solid #9bb2aa;
+}
+.public-site .public-button-secondary:hover { background: var(--public-sage); }
+.public-site .public-report-panel {
+  min-width: 0;
+  margin: 0;
+  padding: 28px;
+  background: var(--public-sage);
+  border-radius: 16px;
+}
+.public-site .public-report-media {
+  display: grid;
+  background: white;
+  border: 1px solid var(--public-border);
+  box-shadow: 0 8px 22px #152f3614;
+}
+.public-site .public-report-media picture,
+.public-site .public-report-media img { display: block; width: 100%; height: auto; }
+.public-site .public-report-summary { display: block; margin-top: 8px; color: var(--public-ink); font-weight: 600; }
+.public-site .public-workflow-actions { margin-top: 28px; }
+.public-site .public-report-panel figcaption { margin-top: 16px; color: var(--public-muted); font-size: 14px; }
+.public-site .public-workflow { padding-block: 40px 56px; }
+.public-site .public-workflow h2 { font-size: 32px; }
+.public-site .public-workflow-steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 40px;
+  list-style: none;
+  padding: 0;
+  margin: 36px 0 0;
+}
+.public-site .public-step-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  margin-bottom: 18px;
+  border-radius: 50%;
+  background: var(--public-sage);
+  color: var(--public-primary);
+  font-size: 19px;
+  font-weight: 600;
+}
+.public-site .public-workflow h3 { margin: 0 0 12px; font-size: 20px; line-height: 1.45; font-weight: 600; }
+.public-site .public-workflow-steps p { font-size: 16px; }
+.public-site .public-closing {
+  padding: 40px;
+  margin-top: 40px;
+  background: var(--public-sage);
+  border-radius: 16px;
+}
+.public-site .public-closing p { max-width: 670px; margin-bottom: 24px; color: var(--public-muted); }
+@media (max-width: 899px) {
+  .public-site .public-hero { grid-template-columns: minmax(0, 1fr); gap: 32px; padding-block: 0 40px; }
+  .public-site .public-hero h1 { max-width: 640px; font-size: 40px; text-wrap: initial; }
+  .public-site .public-hero-copy { max-width: 680px; }
+  .public-site .public-report-panel { width: 100%; max-width: 580px; }
+  .public-site .public-workflow-steps { grid-template-columns: minmax(0, 1fr); gap: 32px; }
+  .public-site .public-workflow { padding-block: 32px 40px; }
+  .public-site .public-workflow h2 { font-size: 28px; }
+}
+@media (max-width: 600px) {
+  .public-site .public-hero h1 { font-size: 38px; line-height: 1.32; letter-spacing: -0.8px; }
+  .public-site .public-lead { margin-top: 24px; font-size: 18px; }
+  .public-site .public-hero-actions { flex-direction: column; margin-top: 24px; }
+  .public-site .public-hero-actions .public-button { width: 100%; }
+  .public-site .public-report-panel { padding: 18px; border-radius: 12px; }
+  .public-site .public-closing { padding: 28px 20px; }
+  .public-site .public-closing .public-button { width: 100%; }
+}
+
+.public-site .public-capture-link { display: block; margin-top: 24px; color: var(--public-primary); }
+.public-site .public-capture-frame {
+  display: grid;
+  height: 250px;
+  padding: 12px;
+  background: var(--public-sage);
+  border: 1px solid var(--public-border);
+  border-radius: 10px;
+}
+.public-site .public-capture-frame picture { display: block; min-height: 0; }
+.public-site .public-capture-frame img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.public-site .public-capture-hint { display: inline-block; padding-block: 8px; font-size: 14px; }
+.public-site .public-worked-example { padding-block: 40px 56px; }
+.public-site .public-worked-example > p { max-width: 800px; }
+.public-site .public-example-summary { margin-top: 24px; font-weight: 600; color: var(--public-primary); }
+.public-site .public-example-rows { margin: 28px 0 0; padding: 0; list-style: none; }
+.public-site .public-example-rows > li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 3fr);
+  gap: 32px;
+  padding: 28px 0;
+  border-top: 1px solid var(--public-border);
+}
+.public-site .public-example-rows h3 { margin: 0; font-size: 20px; line-height: 1.5; }
+.public-site .public-example-rows h3 span { display: block; font-size: 15px; font-weight: 400; color: var(--public-muted); }
+.public-site .public-example-rows dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px; margin: 0; }
+.public-site .public-example-rows dt { font-size: 14px; font-weight: 600; color: var(--public-primary); margin-bottom: 8px; }
+.public-site .public-example-rows dd { margin: 0; font-size: 17px; }
+.public-site .public-example-caption { margin-top: 20px; font-size: 14px; color: var(--public-muted); }
+@media (max-width: 899px) {
+  .public-site .public-capture-frame { height: auto; max-width: 390px; }
+  .public-site .public-capture-frame img { height: auto; }
+  .public-site .public-example-rows > li { grid-template-columns: minmax(0, 1fr); gap: 20px; }
+  .public-site .public-example-rows dl { gap: 24px; }
+}
+@media (max-width: 600px) {
+  .public-site .public-example-rows dl { grid-template-columns: minmax(0, 1fr); }
+}

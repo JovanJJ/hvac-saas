@@ -3,6 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "sample:workflow": "CAPTURE_PUBLIC_WORKFLOW=true playwright test tests/capture-public-workflow.spec.ts --project=desktop --workers=1",
+    "sample:report": "tsx scripts/generate-public-report.ts",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",

@@ -1,8 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
-import type { PublicAccountLink } from "./account-link";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 
 const sections = [
   { href: "/#kako-radi", label: "Kako radi" },
@@ -10,9 +9,9 @@ const sections = [
   { href: "/#pitanja", label: "Pitanja" },
 ];
 
-export function PublicNavigation({ account, pending = false, demoAvailable }: {
-  account: PublicAccountLink | null;
-  pending?: boolean;
+export function PublicNavigation({ accountAction, registrationAction, demoAvailable }: {
+  accountAction: ReactNode;
+  registrationAction: ReactNode;
   demoAvailable: boolean;
 }) {
   const [open, setOpen] = useState(false);
@@ -37,10 +36,6 @@ export function PublicNavigation({ account, pending = false, demoAvailable }: {
     };
   }, [open]);
 
-  const accountAction = pending
-    ? <span className="public-account-pending" role="status">Provera naloga…</span>
-    : <Link href={account?.href ?? "/sign-in"} prefetch={false}>{account?.label ?? "Prijava"}</Link>;
-
   return (
     <>
       <nav className="public-desktop-nav" aria-label="Glavna navigacija">
@@ -49,7 +44,7 @@ export function PublicNavigation({ account, pending = false, demoAvailable }: {
         </div>
         <div className="public-account-actions">
           {accountAction}
-          {!pending && !account && <Link href="/sign-up" prefetch={false}>Registracija</Link>}
+          {registrationAction}
           {demoAvailable && <Link className="public-button" href="/demo">Zatraži demonstraciju</Link>}
         </div>
       </nav>
@@ -67,7 +62,7 @@ export function PublicNavigation({ account, pending = false, demoAvailable }: {
             document.getElementById(hash.slice(1))?.focus();
           }
         }}>
-          {!pending && !account && <Link href="/sign-up" prefetch={false}>Registracija</Link>}
+          {registrationAction}
           {demoAvailable && <Link className="public-button" href="/demo">Zatraži demonstraciju</Link>}
           {sections.map((link) => <Link key={link.href} href={link.href}>{link.label}</Link>)}
         </div>

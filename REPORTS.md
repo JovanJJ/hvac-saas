@@ -29,6 +29,12 @@ Use the fictional Jagodina example, work order `RN-2026-0142`, site `JA-02`. KL-
 
 [Visual reference with fictional data](https://chatgpt.com/library?file_id=libfile_eb8282a0320481918a057922ef2b2a1b&account_id=personal).
 
+## Public fictional sample · UX03
+
+`/primeri/servisni-izvestaj.pdf` is an intentional anonymous static publication, independent of private issued revisions and guest capabilities. It contains the fictional RN-2026-0142 / JA-02 scenario, explicitly labeled fictional, with two serviced systems, a damaged deflector requiring a quote and a locked archive requiring a new appointment. Totals are 4 planned / 3 inspected / 2 open actions; receipt remains pending. It uses the existing v1 template/renderer and embedded Serbian fonts without modifying live report behavior, revisions or rendering jobs.
+
+The fixed customer DTO lives in `scripts/fixtures/public-report.ts`. `npm run sample:report` renders the complete searchable A4 PDF, validates text/fonts/metadata, rasterizes its exact bytes and derives desktop/header-summary and phone/counters-exceptions WebP crops from PDF word coordinates. The public JSON manifest records dimensions, crop coordinates, page count and artifact SHA-256 hashes. No database, service credentials, real identities, access/internal notes, evidence URLs or active report tokens participate. The checked-in assets ship without needing a renderer in the web runtime; regeneration is an explicit maintainer task. See [sample generation instructions](scripts/fixtures/README.md) for prerequisites and visual review. Existing private PDFs retain their original access rules, and the interactive `/preview` fixture remains development-only.
+
 ## Verification
 
 M3b implements first issuance from the office review at `/visits/[visitId]/review`, with a frozen revision at `/office/reports/[revisionId]`. Draft preview and issuance use one database-owned allowlist, `hvac_private.customer_report_data`, and the same `features/reports/document.tsx` template. `features/reports/model.ts` describes the DTO. The former TypeScript field mapper has been removed to avoid two sources of truth. Before issuance, preview shows live data and the visit UUID; afterward it shows the frozen revision and its report number.
