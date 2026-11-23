@@ -60,6 +60,7 @@ export function safeDestination(value: unknown) {
       "/onboarding",
       "/settings/team",
       "/settings/workspace",
+      "/settings/exports",
     ].includes(value)
   )
     return value;

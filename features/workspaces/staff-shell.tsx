@@ -55,6 +55,7 @@ export function StaffShell({
             <>
               <Link href="/settings/team">Tim i pozivi</Link>
               <Link href="/settings/workspace">Podaci firme</Link>
+              <Link href="/settings/exports">Izvoz podataka</Link>
             </>
           )}
           <Link href="/account">Moj nalog</Link>

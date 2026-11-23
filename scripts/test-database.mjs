@@ -21,6 +21,7 @@ await withDatabase(async (db) => {
     "recurring_visits.sql",
     "office_work_queues.sql",
     "handover_billing.sql",
+    "owner_exports.sql",
     "visit_handover.sql",
     "private_evidence.sql",
     "report_issuance.sql",
