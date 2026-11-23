@@ -40,6 +40,7 @@ export function StaffShell({
             <>
               <Link href="/office">Kancelarija</Link>
               <Link href="/office/actions">Sledeće radnje</Link>
+              <Link href="/office/handover">Potvrde i naplata</Link>
               <Link href="/customers">Klijenti</Link>
               <Link href="/sites">Lokacije</Link>
               <Link href="/systems">Sistemi</Link>

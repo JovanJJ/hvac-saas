@@ -1,7 +1,7 @@
 "use client";
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
-export function ReceiptRefresh() {
+export function ReceiptRefresh({ label = "Osveži potvrde" }: { label?: string }) {
   const router = useRouter(),
     [pending, startTransition] = useTransition();
   return (
@@ -11,7 +11,7 @@ export function ReceiptRefresh() {
       aria-busy={pending}
       onClick={() => startTransition(() => router.refresh())}
     >
-      {pending ? "Osvežavanje…" : "Osveži potvrde"}
+      {pending ? "Osvežavanje…" : label}
     </button>
   );
 }

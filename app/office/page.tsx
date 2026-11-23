@@ -8,6 +8,7 @@ export default function OfficePage() {
       {(context) => (
         <>
           <h1>Kancelarija</h1>
+          <Link href="/office/handover" className="button secondary my-5">Potvrde prijema i provera naplate</Link>
           <ReviewQueue />
           <RecentReports />
           <Link href="/customers" className="button secondary">

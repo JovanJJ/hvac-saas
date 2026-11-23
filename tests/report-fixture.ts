@@ -56,6 +56,8 @@ export async function createReportFixture({
         if (error) throw new Error("Fixture storage cleanup failed");
       }
       await db.query("begin");
+      await db.query("delete from hvac_private.billing_review_events where organization_id=$1 and visit_id=$2", [org, visitId]);
+      await db.query("delete from hvac_private.visit_billing_review where organization_id=$1 and visit_id=$2", [org, visitId]);
       await db.query(
         "delete from hvac_private.field_reconciliations where organization_id=$1 and payload->>'visit'=$2",
         [org, visitId],
