@@ -73,6 +73,8 @@ test("verified sign-in, tenant landing, session refresh and sign-out", async ({
   );
   expect(refreshedSession.refresh_token !== oldRefreshToken).toBe(true);
   await page.goto("/");
+  await expect(page).toHaveURL(/\/$/);
+  await page.getByRole("navigation", { name: "Navigacija u podnožju" }).getByRole("link", { name: "Kancelarija", exact: true }).click();
   await expect(page).toHaveURL(/\/office$/);
   await page.getByRole("button", { name: "Odjavi se" }).click();
   await expect(page).toHaveURL(/\/sign-in$/);

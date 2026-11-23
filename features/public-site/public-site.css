@@ -1,0 +1,59 @@
+.public-site {
+  --public-ink: #152f36;
+  --public-muted: #475f63;
+  --public-primary: #08665f;
+  --public-border: #cbd9d3;
+  --public-sage: #e6f0eb;
+  color: var(--public-ink);
+  background: #f8faf7;
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  font-size: 17px;
+}
+.public-site .public-container { width: 100%; max-width: 1224px; margin-inline: auto; padding-inline: 32px; }
+.public-site a { text-underline-offset: 4px; }
+.public-site :focus-visible { outline: 3px solid var(--public-primary); outline-offset: 5px; }
+.public-site .public-skip-link { position: absolute; top: 12px; left: 20px; transform: translateY(-160%); z-index: 20; padding: 12px 20px; background: white; }
+.public-site .public-skip-link:focus { transform: translateY(0); }
+.public-site .public-header { background: white; border-bottom: 1px solid var(--public-border); }
+.public-site .public-header-inner { display: flex; align-items: center; justify-content: space-between; gap: 24px; min-height: 94px; position: relative; }
+.public-site .public-brand { font-size: 32px; font-weight: 800; letter-spacing: -1.5px; text-decoration: none; white-space: nowrap; }
+.public-site .public-brand span { color: var(--public-primary); }
+.public-site .public-desktop-nav { display: flex; flex: 1; justify-content: space-between; align-items: center; gap: 24px; margin-left: 32px; }
+.public-site .public-section-links, .public-site .public-account-actions { display: flex; align-items: center; gap: 28px; }
+.public-site .public-header nav a { display: inline-flex; align-items: center; min-height: 44px; font-size: 16px; font-weight: 600; text-decoration: none; }
+.public-site .public-header nav a:hover { text-decoration: underline; }
+.public-site .public-button { justify-content: center; background: var(--public-primary); color: white; padding: 13px 20px; border-radius: 8px; }
+.public-site .public-button:hover { background: #07534d; }
+.public-site .public-account-pending { font-size: 14px; color: var(--public-muted); }
+.public-site .public-mobile-nav { display: none; }
+.public-site .public-main { flex: 1; max-width: 1224px; padding-block: 64px; }
+.public-site .public-intro { max-width: 780px; padding-bottom: 48px; }
+.public-site .public-eyebrow { color: var(--public-primary); font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 20px; }
+.public-site h1 { font-size: clamp(36px, 4.3vw, 58px); line-height: 1.18; letter-spacing: -1.5px; margin-bottom: 26px; }
+.public-site .public-intro > p:last-child { font-size: 20px; color: var(--public-muted); line-height: 1.7; }
+.public-site .public-section { border-top: 1px solid var(--public-border); padding-block: 28px; }
+.public-site h2 { font-size: 26px; line-height: 1.3; margin-bottom: 12px; scroll-margin-top: 28px; }
+.public-site .public-section p { max-width: 760px; color: var(--public-muted); }
+.public-site .public-footer { border-top: 1px solid var(--public-border); background: white; }
+.public-site .public-footer-inner { display: flex; align-items: center; justify-content: space-between; gap: 32px; padding-block: 32px; }
+.public-site .public-footer p { color: var(--public-muted); font-size: 14px; }
+.public-site .public-footer nav { display: flex; flex-wrap: wrap; gap: 24px; }
+.public-site .public-footer nav a { min-height: 44px; display: inline-flex; align-items: center; }
+@media (max-width: 1099px) {
+  .public-site .public-desktop-nav { display: none; }
+  .public-site .public-mobile-nav { display: block; }
+  .public-site .public-mobile-actions { display: flex; align-items: center; gap: 20px; }
+  .public-site .public-menu-toggle { min-height: 44px; padding: 8px 16px; background: white; color: var(--public-ink); border: 1px solid #9bb2aa; border-radius: 8px; }
+  .public-site .public-menu-panel:not([hidden]) { display: grid; gap: 8px; position: absolute; left: 20px; right: 20px; top: calc(100% - 1px); background: white; border: 1px solid var(--public-border); border-radius: 0 0 12px 12px; padding: 20px; box-shadow: 0 12px 20px #152f3610; z-index: 10; }
+}
+@media (max-width: 600px) {
+  .public-site .public-container { padding-inline: 20px; }
+  .public-site .public-header-inner { min-height: 84px; gap: 12px; }
+  .public-site .public-mobile-actions { gap: 12px; }
+  .public-site .public-mobile-actions > a { max-width: 124px; font-size: 14px; line-height: 1.3; }
+  .public-site .public-main { padding-block: 40px; }
+  .public-site .public-intro > p:last-child { font-size: 18px; }
+  .public-site .public-footer-inner { align-items: flex-start; flex-direction: column; gap: 20px; }
+}

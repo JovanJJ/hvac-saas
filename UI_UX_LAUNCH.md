@@ -185,14 +185,149 @@ Use the existing PDF and product screens as evidence. The only commissioned or g
 
 Existing reference: [Example report with fictional data](https://chatgpt.com/library?file_id=libfile_eb8282a0320481918a057922ef2b2a1b&account_id=personal). Host the approved sample in the website's public assets at implementation.
 
-## 7. Implementation order and review
+## 7. Feature implementation plan
 
-1. Map the current root redirect, session handling, invitation return path and role resolver. Implement the public root and responsive header alongside existing protected layouts.
-2. Build the landing sections with the Serbian copy. Add the sample PDF and product captures. Connect every anchor, demo link and authentication action.
-3. Add the demo request with its delivery destination, privacy and terms pages, and the trial wording approved by the operator. Verify the agreed tax presentation, operator identity, cancellation and retention facts before commercial publication.
-4. Test signed-out mobile, owner, technician, multiple memberships, invited employee and a guest PDF recipient. Test keyboard-only navigation and form success, invalid email, network failure and retry. At 360 px and 1440 px check that both account actions are discoverable, the H1 wraps naturally and the full report remains accessible.
-5. Ask one owner to find the monthly team price, open the sample and request a demo. Ask one invited technician to reach their assigned visit. Record where each gets stuck and fix that step before expanding the site.
+**Planning baseline: 23 November 2026.** The original request authorized this implementation plan only; the subsequent request authorizes UX01. Sections 1–6 describe the intended experience; their prompts and publication instructions do not authorize later tickets, image generation, customer contact or deployment. Implement one ticket below per subsequent request. UX02–UX14 remain **Not started**.
 
-**First implementation prompt**
+**Sequence:** UX01 → UX02 → UX03 → UX04 → UX05 → UX06 → UX07 → UX08 → UX09 → UX10 → UX11 → UX12 → UX13 → UX14 → final environment/release gate. Finish feature work and local acceptance before staging. Existing M6a staging drafts remain deferred; this plan does not mark any M6 ticket complete or remove its release requirements.
 
-> Read AGENTS.md, the current auth routes, and this UI/UX plan. Implement the public landing page, its responsive header and the existing-account return path first. Use Serbian Latin copy from section 2. Preserve verified role routing, invitation callbacks and guest report links. For media use the fictional sample PDF and real seeded product screenshots. At handoff list the routes and checks actually verified and any publication details that still need the operator's input.
+### Repository baseline and scope decisions
+
+- `app/page.tsx` currently redirects through `landingPath()` in `features/workspaces/dal.ts`. Replace only the public root behavior; authentication actions, protected routes and callbacks continue to resolve authorized destinations.
+- The current wordmark is **teren.**, shared in concept by `features/auth/auth-screen.tsx` and `features/workspaces/staff-shell.tsx`. Keep it. The reference's **Servisni nalog** wordmark is a layout placeholder; its hero sentence remains the requested Serbian copy.
+- `UI_UX_REFERENCE.png` is the visual reference for the public header, desktop two-column hero, stacked phone hero, report panel, buttons and three-step section. It is not a screenshot to embed as the website, a replacement app shell, or a change to the issued PDF template. Build semantic, selectable HTML around real report media. The outer presentation board and the labels RAČUNAR/TELEFON are not page content.
+- Public assets currently have no approved sample PDF, report crop, workflow screenshots or field photograph. UX03 produces the report assets; UX04 produces workflow captures. Use the local report implementation and fictional fixture rather than depending on the external library links above. The local `DEVELOPMENT_GUIDE.md` is the per-screen implementation reference.
+- `StaffShell` currently uses a wrapping horizontal navigation. The office sidebar and phone navigation are a separate ticket from the public header. Keep all existing operational destinations reachable, including imports, maintenance, exports and owner settings.
+- Current routing sends a verified identity without memberships to `/onboarding`; `/account` provides account/workspace management. Keep these real routes. With several memberships, the resolver currently falls back to the first when no selection cookie exists; UX06 adds the explicit chooser described in section 4, with regression coverage.
+- Trial timing and prices in this brief are commercial proposals. Do not add subscription enforcement, checkout, invoice issuance or a new trial clock during a visual refresh. Until the operator confirms them, show **Predložene cene za pilot** and avoid presenting an unimplemented trial start rule as enforced behavior.
+- Existing Supabase Auth SMTP configuration serves authentication emails. A demo request needs its own explicit receipt/delivery contract; do not assume changing the Auth SMTP settings creates a general application mail sender.
+
+### UX01 — Public root and account-aware header
+
+**Status: Implemented and locally verified · 23 November 2026.** `app/page.tsx` now renders the public entry through `features/public-site/public-layout.tsx`. Request-scoped account links, responsive navigation, skip link, scoped tokens/styles and reusable footer are implemented without changing protected layouts or the existing landing resolver. The demo destination is an explicitly labeled development-only preview, with no lead form; its links are omitted in production. Introductory anchor sections keep navigation usable until the full UX02–UX05 content lands. No staging services were started.
+
+**Checks actually run:** `npm run lint`, `npm run typecheck`, `npm test` (15 passing unit test files), and `npm run build -- --webpack` passed. The sandboxed build first failed while parsing TypeScript configuration output; the build succeeded with process/network restrictions lifted. Browser checks initially required a missing Chromium audio library, extracted into `/tmp` without installing system packages. The final focused Playwright run passed 24 scenarios across phone/desktop for public entry, role shortcuts, safe visit/invitation destinations, unavailable guest links, session refresh/sign-out, two organizations, unassigned users and workspace invitations/role changes/revocation/switching. An additional five checks passed for signed-in shortcuts at 360 px and the local demo preview. Anonymous screenshots at 360/390/768/1440 px were captured; 360/1440 px screenshots were visually inspected. Local production HTTP smoke checks confirmed `/` = 200 with no-store caching and no demo CTA, `/demo` = 404 and `/preview` = 404. Development auth/workspace regressions emitted recurring framework Performance-measure diagnostics despite passing assertions; no claim is made that these diagnostics were fixed. Real-device and staging acceptance remain deferred. **Next: UX02.**
+
+**Depends on:** No earlier UX ticket. Read `AGENTS.md`, `SPEC.md`, the auth/workspace DAL, callbacks and the installed Next.js layout, Server Component and caching guides before implementation.
+
+**Implement:** Replace the root redirect with a public page and a reusable public header/footer layout. Add the desktop navigation and accessible mobile menu from sections 1 and 5. Resolve the signed-in shortcut on the server using verified membership: office, Today, account/chooser or onboarding as appropriate. Keep public content renderable for signed-out visitors; avoid a protected layout or a database membership lookup for anonymous visitors. Isolate cookie-dependent account controls from reusable public content and prevent cross-user caching. Use existing wordmark and shared spacing/color/control tokens scoped to avoid restyling operational screens unexpectedly.
+
+**Acceptance:** `/` remains public with and without a session. At 360, 390, 768 and 1440 px, header actions fit, the menu works with keyboard/Escape and returns focus, and both login and registration are discoverable. Direct invitation, recovery, visit and recipient links retain their destinations. Establish final link targets now; temporary unfinished destinations stay in local development and are not presented as a completed launch.
+
+### UX02 — Reference hero and landing structure
+
+**Depends on:** UX01.
+
+**Implement:** Build the hero, three numbered workflow steps and closing CTA using section 2 copy and the supplied reference proportions. Create reusable container, section-heading, action-link and report-panel components; preserve server rendering for static sections. Keep text/actions before the report on phones, give buttons generous touch areas and use real heading anchors. Reserve the report panel dimensions for UX03 without a fake report download. Reuse the established font; introduce Inter only if needed and bundled/configured consistently.
+
+**Acceptance:** Desktop shows the two-column hero and three workflow columns; phones stack them without horizontal page scrolling. Verify H1 wrapping, contrast, focus, reduced motion and 200% zoom. Record screenshots at 360, 390 and 1440 px. No invented claims, testimonials or decorative reference-board elements.
+
+### UX03 — Public fictional report and responsive preview
+
+**Depends on:** UX02. Read `REPORTS.md` and the existing report renderer/fixtures.
+
+**Implement:** Produce a static, selectable Serbian A4 PDF using the existing report format and fictional RN-2026-0142 scenario. Publish the reviewed artifact at `/primeri/servisni-izvestaj.pdf`, with desktop/phone crops from the same bytes and explicit image dimensions. Include a reproducible generation/capture command and fictional source data. Public sample media is deliberately publishable; keep the interactive M0 fixture development-only. Do not use staff cookies, a live guest capability, real records or an internal/private PDF URL as the public sample.
+
+**Acceptance:** PDF and crops agree on **4 planirana sistema / 3 pregledana / 2 otvorene stavke**, including the locked-room outcome. Inspect every PDF page and Serbian glyphs; verify anonymous download in a production build and readable preview at phone/desktop widths. Check assets and PDF metadata for real identities, internal notes and credentials.
+
+### UX04 — Worked example and actual product captures
+
+**Depends on:** UX03.
+
+**Implement:** Add the two outstanding-action rows, summary and three workflow captures using the same fictional site/visit. Capture the actual schedule, field form and office review, with responsive crops and appropriate alt text. Add a field photograph only when a suitable licensed or generated asset is available; retain a complete text/rows layout while it is pending. Keep the video omitted until a real captioned recording, transcript and duration exist. Update captures after the later app refresh tickets if their UI changes.
+
+**Acceptance:** Screenshots reflect functioning product UI and contain fictional data only. Rows remain readable on phones; images have bounded dimensions and below-fold lazy loading. PDF remains the full accessible source for the report example. No inactive video controls or generated product-screen text.
+
+### UX05 — Pricing and FAQ
+
+**Depends on:** UX04.
+
+**Implement:** Add Tim/Solo cards, pricing anchors, FAQ disclosures and closing/footer content. Put Tim first on phones. Validate `plan=tim|solo` links for the upcoming demo form. Keep proposed prices visibly provisional until confirmed; obtain the actual trial, tax and continuation wording before promoting those terms. FAQ content must match invitation, receipt and sync behavior. Keep the offline promise qualified or unpublished until the pending real-phone acceptance passes.
+
+**Acceptance:** Prices and plan links are easy to find, multiple answers can remain expanded, keyboard operation works and disclosure state is announced. No card collection, automatic billing or claim that a report receipt approves additional work. Confirm the trial sentence is consistent across hero, FAQ and terms.
+
+### UX06 — Authentication, invitations and first entry
+
+**Depends on:** UX05. Read `BACKEND.md` before changing routing or commands.
+
+**Implement:** Refresh existing sign-in, sign-up, recovery, account and onboarding surfaces with shared primitives. Preserve safe authorized return paths through confirmation and invitation acceptance. Add the multi-workspace chooser instead of silently choosing the first membership when no valid selection exists, and map its label to the real `/account` flow. Keep workspace creation at `/onboarding`; identity creation starts no subscription. Add invitation email guidance, wrong-account/expired states and terms/privacy links. Keep Google sign-in absent unless configured and verified.
+
+**Acceptance:** Exercise owner/coordinator → office, technician → Today, no membership → onboarding, multiple memberships → chooser, stale selection and revoked membership. Verify the invitation survives sign-up/confirmation with the matching email, recovery returns safely and malicious external `next` values are rejected. Include a second organization and an unassigned technician for any permission/routing change. Do not switch the existing external Auth SMTP configuration back to local mail merely to run tests; distinguish controlled mail tests from real inbox acceptance.
+
+### UX07 — Demo request from form to durable receipt
+
+**Depends on:** UX06. Read `BACKEND.md` and `DATABASE.md` for the new public write boundary.
+
+**Implement:** Build `/demo` with the form, agenda and report thumbnail in section 3. Use server-side validation, an allowlisted optional plan, field errors, retained inputs, pending/success/failure states and duplicate-submit protection. Define and document a durable lead store plus a protected operator retrieval path or confirmed delivery destination. Ship any migration, restricted access policies and retry behavior with the feature; anonymous visitors may submit only validated lead fields and must never list leads. Add bounded abuse protection. Keep privileged credentials server-only and avoid logging contact details. An email fallback must use a verified address and the explicit label **Pošalji imejl**.
+
+**Acceptance:** Submit a fictional request, retrieve it through the authorized destination and verify retry/double click does not create duplicates. Test invalid email, bad plan, delivery/storage failure and rate limiting. Show success only after durable receipt or confirmed delivery handoff. Verify real delivery to the monitored destination before public launch; do not send unsolicited messages as a test.
+
+### UX08 — Privacy, terms and operator facts
+
+**Depends on:** UX07 so the processing description matches the actual lead flow.
+
+**Implement:** Add `/privatnost` and `/uslovi` using a shared reading layout, dates and in-page contents. Complete identity/contact, providers, retention, local storage/cookies, cancellation, trial and tax details from verified operator facts. Describe existing offline local storage and Auth email handling accurately. Link the pages from registration, demo, prices and footer. Draft unresolved wording locally; do not publish bracket placeholders or invented company details. Obtain operator/legal review of the final wording before commercial publication.
+
+**Acceptance:** Both pages work anonymously, are readable at narrow widths/zoom and use consistent dated commercial wording. List any missing facts explicitly as publication blockers. Local UI implementation may continue while those facts are pending.
+
+### UX09 — Office shell and daily work overview
+
+**Depends on:** UX08 implementation; unresolved publication facts do not block local work.
+
+**Implement:** Refactor `StaffShell` into reusable role-aware office/field navigation with an office desktop sidebar and compact mobile menu. Separate workspace/account/settings controls from daily work. Refresh office home and schedule presentation: today's jobs, review queue, day/week navigation and clear **Zakaži posetu** action. Reuse existing queries and permissions; preserve schedule filters and links to generated maintenance visits. Add useful first-run/empty/loading/error states without hiding operational destinations.
+
+**Acceptance:** Owner and coordinator can reach all permitted destinations on phone/desktop; technician sees only assigned work destinations. Switching workspace refreshes both content and role navigation. Verify day/week/date filters, review links and first-site guidance. Menu visibility does not replace server/database authorization.
+
+### UX10 — Customers, sites and equipment navigation
+
+**Depends on:** UX09.
+
+**Implement:** Refresh customer → site → system hierarchy with breadcrumbs, identity-first details, search and clear site-specific add/schedule actions. Present units, replacements, service history and open actions with reusable detail/list components. Keep existing import preview/apply and export workflows reachable; retain their identity mappings and permissions. Improve responsive forms without changing domain field requirements through styling.
+
+**Acceptance:** Find a system by code, room or serial; navigate to history and schedule work at its site. Check long Serbian labels, empty records, archived items, mobile forms and validation retention. Existing import/reimport identity and exports still work; cross-organization and unassigned access remain denied.
+
+### UX11 — Technician Today, entry and offline handover
+
+**Depends on:** UX10. Read `FRONTEND.md` and the offline contracts before editing the shell or field forms.
+
+**Implement:** Refresh Today rows, visit system cards, outcome forms and summary using shared primitives. Keep identity, save state, photos and next action near the active system. Distinguish local save, pending upload, synchronized, conflict and office handover with explicit Serbian labels; show actionable validation linked to the affected system/owner/deadline. Preserve IndexedDB partitioning, outbox identities, conflict recovery and the separately built/versioned offline shell. Update its assets deliberately when shared visual changes affect it.
+
+**Acceptance:** Complete RN-2026-0142 online and with a downloaded offline visit, including one pending-outcome error and one missing-follow-up-owner error; final totals remain 4/3/2. Verify local save/reload, queued photos, reconnect/retry without duplicates, reconciliation, account switch and sign-out cleanup. Viewport/emulator checks do not close the existing physical-device camera/storage/restart gate.
+
+### UX12 — Office review, issuing and follow-up work
+
+**Depends on:** UX11. Read `REPORTS.md` before touching report views.
+
+**Implement:** Improve review hierarchy, correction reasons, evidence visibility, owned/due follow-ups, PDF preview, issuance progress and share-link readiness. Apply the visual system to the existing next-actions, maintenance and receipt/billing-review screens with consistent filters and empty/error states. Reuse existing mutations and job states. Maintain the distinction between scheduled work, submitted findings, open actions, receipt and internal billing review.
+
+**Acceptance:** Review the four-system visit, return it for correction, issue it and open the archived revision when ready. Follow both open actions to their source devices and verify receipt/billing states stay independent. Repeated issuance/retries do not create duplicates; existing immutable PDFs and amendment history remain unchanged. Do not modify the customer PDF format merely to match the public reference.
+
+### UX13 — Customer report and receipt experience
+
+**Depends on:** UX12.
+
+**Implement:** Refresh the existing `/r/[token]` customer surface with company/site/date/revision context, summary, download and separate optional receipt action. Provide clear expired/revoked/unavailable and already-confirmed states. Keep it independent from staff navigation and sign-in. Preserve token scoping, private/no-store delivery, internal evidence exclusion and frozen revision content.
+
+**Acceptance:** An anonymous recipient downloads exactly the linked revision; download alone does not record receipt. Explicit confirmation records one receipt for that revision without approving a quote. Test revoked/expired links, a later amendment, keyboard use and phone/desktop layouts. Verify internal photos/notes and other revisions remain inaccessible.
+
+### UX14 — Local integrated acceptance and publication checklist
+
+**Depends on:** UX01–UX13.
+
+**Implement:** Reconcile copy, navigation, captures and shared components across the entire journey. Add public-page metadata, meaningful titles, social preview assets and indexing rules while keeping private/auth/capability pages out of indexing. Check that service-worker caching does not store private responses or interfere with public navigation. Resolve broken links and unfinished destinations. Record evidence and pending operator/device facts in this file; do not invent usability observations.
+
+**Acceptance:** Run the relevant repository scripts (`npm run lint`, `npm run typecheck`, `npm test`, `npm run build`) and focused Playwright suites for public entry, auth/workspaces, affected app flows, guest reports and offline behavior. Add meaningful regression coverage for new routing and demo submission. Existing Playwright projects cover 390 px and 1440 px; explicitly add/check 360 px and tablet width. Inspect screenshots, keyboard/focus behavior, contrast and layout shift. Verify the production build keeps the interactive development fixture inaccessible while serving the intentional public sample. Record actual commands/results and any environment limitation, rather than treating planned checks as passed.
+
+Ask an available owner to find pricing, open the sample and request a demo, and an invited technician to reach assigned work. Record actual friction only when those participants are available. Keep real-phone offline acceptance pending until a device is available.
+
+### Final gate — Staging and release after feature completion
+
+Only after UX14 and the remaining feature work, resume the existing M6 environment/release sequence in `DEVELOPMENT_GUIDE.md`. Reuse the local M6a assessment and drafts rather than creating a second deployment design. Staging may be isolated locally or on the eventual VPS, as separately agreed; do not start either as part of these UI tickets.
+
+Before public release, verify target HTTPS, Supabase origins/redirects, monitored demo delivery, real confirmation/recovery email, private media, worker recovery, backups/restore and rollback. Exercise the complete field → office → PDF → customer receipt journey and physical-device offline/photo acceptance on the intended environment. Confirm operator identity, commercial/legal wording and all publication assets. Local completion does not stand in for these release checks.
+
+### Ticket handoff and first implementation prompt
+
+For every ticket report changed files/routes, checks actually run, screenshot or PDF evidence where applicable, unresolved facts and the next ticket. Update the owning domain document when a behavior contract changes. Avoid unrelated schema changes, dependency upgrades or a wholesale rewrite of existing features. Prefer Server Components, small interactive client boundaries and reusable components; consult the installed Next.js guides before implementation.
+
+> Implement UX01 from UI_UX_LAUNCH.md. Read AGENTS.md, the installed Next.js guides and existing auth/workspace routes first. Add the public root and responsive account-aware header using UI_UX_REFERENCE.png for layout and the existing teren. brand. Preserve protected route authorization, safe return destinations, invitation/recovery callbacks and guest report links. Verify signed-out, owner and technician entry at phone and desktop widths. Keep staging deferred and report only the checks actually run.
