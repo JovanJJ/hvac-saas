@@ -2,7 +2,7 @@
 export function supabaseSettings(
   runtimeEnv: Record<string, string | undefined>,
 ) {
-  const url = runtimeEnv.NEXT_PUBLIC_SUPABASE_URL;
+  const url = runtimeEnv.SUPABASE_INTERNAL_URL || runtimeEnv.NEXT_PUBLIC_SUPABASE_URL;
   const key =
     runtimeEnv.SUPABASE_PUBLISHABLE_KEY ||
     runtimeEnv.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||

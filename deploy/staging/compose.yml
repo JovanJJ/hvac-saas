@@ -1,0 +1,61 @@
+name: hvac-staging
+services:
+  web:
+    image: ${APP_IMAGE:?Use an immutable repository@sha256 digest}
+    restart: unless-stopped
+    init: true
+    env_file:
+      - path: ${APP_ENV_FILE:?Absolute private app runtime env path}
+        format: raw
+    environment:
+      NODE_ENV: production
+      PORT: '3000'
+      HOSTNAME: 0.0.0.0
+    networks: [frontend, api]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+  worker:
+    image: ${WORKER_IMAGE:?Use an immutable repository@sha256 digest}
+    restart: unless-stopped
+    init: true
+    env_file:
+      - path: ${WORKER_ENV_FILE:?Absolute private worker runtime env path}
+        format: raw
+    networks: [api]
+    shm_size: 256mb
+    mem_limit: 1g
+  proxy:
+    image: ${PROXY_IMAGE:?Use the pinned Caddy digest}
+    restart: unless-stopped
+    environment:
+      APP_HOST: ${APP_HOST:?Public app hostname}
+      API_HOST: ${API_HOST:?Public Supabase hostname}
+      ACME_EMAIL: ${ACME_EMAIL:?TLS operator email}
+    ports: ['80:80', '443:443', '443:443/udp']
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks: [frontend, api]
+  tools:
+    profiles: [tools]
+    user: ${TOOLS_UID:-1000}:${TOOLS_GID:-1000}
+    image: ${TOOLS_IMAGE:?Use an immutable tooling image digest}
+    env_file:
+      - path: ${TOOLS_ENV_FILE:?Absolute private provisioning env path}
+        format: raw
+    volumes:
+      - ${TOOLS_ENV_FILE}:/app/.env
+    networks: [api, database]
+    command: [node, scripts/migrate.mjs]
+networks:
+  frontend: {}
+  api:
+    external: true
+    name: ${SUPABASE_API_NETWORK:?Dedicated staging API network}
+  database:
+    external: true
+    name: ${SUPABASE_PRIVATE_NETWORK:?Dedicated staging backend network}
+volumes:
+  caddy_data:
+  caddy_config:

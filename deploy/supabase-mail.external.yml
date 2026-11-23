@@ -1,0 +1,13 @@
+# Last override for the existing stack. Values come from its private .env via mail:external.
+services:
+  auth:
+    environment:
+      GOTRUE_SMTP_HOST: ${SMTP_HOST:?Configure SMTP_HOST in the Supabase project .env}
+      GOTRUE_SMTP_PORT: ${SMTP_PORT:?Configure SMTP_PORT}
+      GOTRUE_SMTP_USER: ${SMTP_USER:?Configure SMTP_USER}
+      GOTRUE_SMTP_PASS: ${SMTP_PASS:?Configure SMTP_PASS}
+      GOTRUE_SMTP_ADMIN_EMAIL: ${SMTP_ADMIN_EMAIL:?Configure SMTP_ADMIN_EMAIL}
+      GOTRUE_SMTP_SENDER_NAME: ${SMTP_SENDER_NAME:-Teren}
+      GOTRUE_MAILER_AUTOCONFIRM: 'false'
+      GOTRUE_SITE_URL: ${HVAC_MAIL_APP_ORIGIN:?Application origin}
+      GOTRUE_URI_ALLOW_LIST: ${HVAC_MAIL_APP_ORIGIN}/auth/callback,${HVAC_MAIL_APP_ORIGIN}/auth/callback?next=/reset-password,${HVAC_MAIL_APP_ORIGIN}/auth/confirm,${HVAC_MAIL_APP_ORIGIN}/reset-password

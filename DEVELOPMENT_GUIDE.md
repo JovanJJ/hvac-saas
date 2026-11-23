@@ -321,6 +321,10 @@ Changed implementation files: new `app/settings/exports/page.tsx`, `app/api/offi
 
 The next feature ticket is **M6a — Reproducible staging release**. Completing the M5 feature tickets does not close the documented parent/environment gates or the pending physical-device acceptance.
 
+### M6a local assessment — 23 November 2026
+
+M6a is **not complete**. The owner has no staging VPS and requested a local feasibility assessment before further setup. Separate app/worker/tooling images were built and the draft proxy configuration validated without launching a staging stack. Existing development services/data remain unchanged. See [LOCAL_REVIEW.md](deploy/staging/LOCAL_REVIEW.md) for actual resource observations, performed checks and the proposed isolated local sequence. Public-environment and physical-device gates remain pending.
+
 ### M6 — Deployment, recovery and paid pilot
 
 Read [ARCHITECTURE.md](ARCHITECTURE.md) for releases, provider boundaries and recovery. Run technical checks with fictional staging data before introducing identifiable pilot data. Real pilot contact, pricing agreement and usage observations require operator/customer input; agents must not invent them.

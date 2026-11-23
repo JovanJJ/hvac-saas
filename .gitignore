@@ -51,3 +51,7 @@ next-env.d.ts
 
 /public/offline/v2/app.js
 /public/offline/v2/storage.js
+
+# Private staging inputs and generated release artifacts
+/deploy/staging/*.env
+/deploy/staging/generated/

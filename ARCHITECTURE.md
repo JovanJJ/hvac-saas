@@ -129,3 +129,12 @@ M5g adds migration 052's read-only, caller-scoped office work queue and private 
 M5h adds migration 053's private billing state/audit and caller-scoped handover read/command RPCs. The existing Next server/session boundary handles both office queues and the versioned marker. No new provider, worker process, environment setting or invoice service is added; guest receipt, immutable PDF and offline boundaries are unchanged.
 
 M5i adds migration 054's owner-only scoped read RPC and a Next.js private CSV/ZIP download route. Each download serializes one bounded statement-consistent dataset snapshot in memory, using the existing `fflate` dependency. No database/provider credentials enter the browser, and no exported files, object-storage URLs, jobs, new service or runtime configuration are persisted. Core exports do not replace database/evidence/PDF backup and restore procedures.
+
+
+### M6a local preparation (pending)
+
+The owner has no staging VPS and requested local feasibility assessment first. [Local review](deploy/staging/LOCAL_REVIEW.md) records completed image builds and the proposed isolated local sequence. Draft deployment files do not complete M6a or alter the existing development stack. `SUPABASE_INTERNAL_URL`, when set, now overrides the server/worker API transport while `NEXT_PUBLIC_SUPABASE_URL` remains the configured public endpoint; never inject either SQL migration credentials or the service-role key into runtime clients. Docker app builds explicitly use the verified Webpack compiler. Private staging env files/generated artifacts are excluded from Git and Docker build context. Public HTTPS, external mail, isolated persistence/replacement and release/rollback acceptance remain pending.
+
+### External SMTP from development
+
+`npm run mail:external:check` validates the existing Supabase project's SMTP settings and app origin without side effects. `npm run mail:external` replaces the known development capture override and recreates only Auth with external SMTP, exact application redirects and email confirmation enabled. SMTP credentials belong in the private Supabase project `.env`; they are not Next public settings or worker secrets. No test email is sent by provisioning. The local `mail:start` command explicitly returns to capture mode. See [deploy/SMTP.md](deploy/SMTP.md) for provider setup, localhost/PKCE limitations and actual verification status.

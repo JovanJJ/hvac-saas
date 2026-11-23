@@ -1,0 +1,26 @@
+# Merge after the locked existing Supabase docker-compose.yml. Never use on development.
+services:
+  api-gw:
+    ports: !reset []
+    networks:
+      default: {}
+      staging_api:
+        aliases: [supabase-api]
+  supavisor:
+    ports: !reset []
+  auth:
+    environment:
+      GOTRUE_SITE_URL: ${STAGING_APP_ORIGIN:?HTTPS app origin}
+      GOTRUE_URI_ALLOW_LIST: ${STAGING_APP_ORIGIN}/auth/confirm,${STAGING_APP_ORIGIN}/auth/callback,${STAGING_APP_ORIGIN}/reset-password
+      API_EXTERNAL_URL: ${STAGING_API_ORIGIN:?HTTPS Supabase origin}
+      GOTRUE_MAILER_AUTOCONFIRM: 'false'
+      GOTRUE_MAILER_URLPATHS_CONFIRMATION: /auth/v1/verify
+      GOTRUE_MAILER_URLPATHS_INVITE: /auth/v1/verify
+      GOTRUE_MAILER_URLPATHS_RECOVERY: /auth/v1/verify
+      GOTRUE_MAILER_URLPATHS_EMAIL_CHANGE: /auth/v1/verify
+networks:
+  default:
+    name: ${SUPABASE_PRIVATE_NETWORK:?Dedicated staging backend network}
+  staging_api:
+    external: true
+    name: ${SUPABASE_API_NETWORK:?Dedicated staging API network}

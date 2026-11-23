@@ -1,0 +1,40 @@
+{
+ email {$ACME_EMAIL}
+ log default {
+  format filter {
+   wrap json
+   fields {
+    request delete
+   }
+  }
+ }
+}
+{$APP_HOST} {
+ # No access logs: auth/capability paths and query strings are sensitive.
+ request_body {
+  max_size 10MB
+ }
+ reverse_proxy web:3000 {
+  flush_interval -1
+ }
+}
+{$API_HOST} {
+ request_body {
+  max_size 40MB
+ }
+ route {
+  @unsafe path_regexp unsafe `(^|/)[.]{1,2}(/|$)|[%\\]`
+  handle @unsafe {
+   respond 404
+  }
+  @publicApi path /auth/v1/* /rest/v1/* /storage/v1/* /realtime/v1/*
+  handle @publicApi {
+   reverse_proxy supabase-api:8000 {
+    flush_interval -1
+   }
+  }
+  handle {
+   respond 404
+  }
+ }
+}

@@ -11,3 +11,7 @@ coverage
 **/*:Zone.Identifier
 *.md
 !AGENTS.md
+
+# Staging runtime secrets and generated local artifacts
+deploy/staging/*.env
+deploy/staging/generated

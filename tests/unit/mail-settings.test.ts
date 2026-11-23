@@ -1,0 +1,21 @@
+import assert from "node:assert/strict";
+import { externalMailSettings, mailComposeArgs } from "../../scripts/mail-settings.mjs";
+const app = { APP_URL: "http://localhost:3000" };
+const stack = { SMTP_HOST: "smtp.gmail.com", SMTP_PORT: "587", SMTP_USER: "fictional@example.test", SMTP_PASS: "fictional-$()+literal", SMTP_ADMIN_EMAIL: "fictional@example.test" };
+const settings = externalMailSettings(app, stack);
+assert.equal(settings.SMTP_PASS, stack.SMTP_PASS);
+assert.equal(settings.HVAC_MAIL_APP_ORIGIN, app.APP_URL);
+assert.equal(settings.SMTP_SENDER_NAME, "Teren");
+assert.throws(() => externalMailSettings(app, { ...stack, SMTP_HOST: "supabase-mail" }), /local inbox/);
+assert.throws(() => externalMailSettings(app, { ...stack, SMTP_PASS: "" }), /Configure SMTP_PASS/);
+assert.throws(() => externalMailSettings(app, { ...stack, SMTP_PORT: "NaN" }), /SMTP_PORT/);
+assert.throws(() => externalMailSettings(app, { ...stack, SMTP_ADMIN_EMAIL: "invalid" }), /SMTP_ADMIN_EMAIL/);
+assert.throws(() => externalMailSettings(app, { ...stack, SMTP_SENDER_NAME: "Teren\r\nBcc: x" }), /SMTP_SENDER_NAME/);
+assert.throws(() => externalMailSettings({ APP_URL: "https://app.example.test/path" }, stack), /APP_URL/);
+assert.throws(() => externalMailSettings({ APP_URL: "https://user:password@app.example.test" }, stack), /APP_URL/);
+const args = mailComposeArgs({ directory: "/tmp/private stack", project: "fictional", files: ["/tmp/compose.yml"], overlay: "/tmp/mail.yml", envFile: "/tmp/private.env" });
+assert.equal(args.includes(stack.SMTP_PASS), false);
+assert.equal(args.includes("down"), false);
+assert.deepEqual(args.slice(-4), ["-f", "/tmp/compose.yml", "-f", "/tmp/mail.yml"]);
+
+assert.throws(() => externalMailSettings(app, { ...stack, SMTP_USER: "sender@gmail.com", SMTP_ADMIN_EMAIL: "sender@gmail.com" }), /real sender account/);

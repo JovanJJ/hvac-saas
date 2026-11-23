@@ -35,3 +35,14 @@ assert.throws(() =>
     SUPABASE_PUBLISHABLE_KEY: jwt("anon"),
   }),
 );
+
+assert.equal(supabaseSettings({
+  NEXT_PUBLIC_SUPABASE_URL: "https://api.example.invalid",
+  SUPABASE_INTERNAL_URL: "http://supabase-api:8000",
+  SUPABASE_PUBLISHABLE_KEY: "sb_publishable_fictional",
+}).url, "http://supabase-api:8000");
+assert.throws(() => supabaseSettings({
+  NEXT_PUBLIC_SUPABASE_URL: "https://api.example.invalid",
+  SUPABASE_INTERNAL_URL: "file:///tmp/invalid",
+  SUPABASE_PUBLISHABLE_KEY: "sb_publishable_fictional",
+}));

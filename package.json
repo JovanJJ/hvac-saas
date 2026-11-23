@@ -27,7 +27,9 @@
     "prebuild": "npm run offline:build",
     "pretypecheck": "npm run offline:build",
     "pretest:e2e": "npm run offline:build",
-    "worker:maintenance": "tsx --env-file=.env src/worker/main.ts --maintenance-only"
+    "worker:maintenance": "tsx --env-file=.env src/worker/main.ts --maintenance-only",
+    "mail:external": "node scripts/configure-external-mail.mjs",
+    "mail:external:check": "node scripts/configure-external-mail.mjs --check"
   },
   "dependencies": {
     "@next/env": "16.4.6",
