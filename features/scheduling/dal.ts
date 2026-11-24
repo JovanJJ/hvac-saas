@@ -12,12 +12,10 @@ import {
 } from "./model";
 export async function scheduleSnapshot(query: SearchParams) {
   const context = await requireWorkspace(["owner", "coordinator"]);
-  const filters = readFilters(
-    query,
-    new Date().toLocaleDateString("en-CA", {
-      timeZone: context.workspace.organization.time_zone,
-    }),
-  );
+  const today = new Date().toLocaleDateString("en-CA", {
+    timeZone: context.workspace.organization.time_zone,
+  });
+  const filters = readFilters(query, today);
   const client = await createSupabaseServerClient();
   const [result, staff] = await Promise.all([
     client.rpc("schedule_snapshot", {
@@ -35,7 +33,7 @@ export async function scheduleSnapshot(query: SearchParams) {
     visits: ScheduleVisit[];
     sites: { id: string; name: string; code: string }[];
   };
-  return { ...data, staff, filters };
+  return { ...data, staff, filters, today };
 }
 export async function scheduleDetail(id: string) {
   const context = await requireWorkspace(["owner", "coordinator"]);

@@ -1,3 +1,4 @@
+import { openWorkspaceControls } from "./staff-controls";
 import { test, expect, chromium, type Page } from "@playwright/test";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -11,12 +12,17 @@ async function login(
   page: Page,
   email: string,
   password = process.env.SEED_PASSWORD!,
+  workspaceName?: string,
 ) {
   await page.goto("/sign-in");
   await page.getByLabel("Email adresa").fill(email);
   await page.getByLabel("Lozinka", { exact: true }).fill(password);
   await page.getByRole("button", { name: "Prijavi se", exact: true }).click();
-  await expect(page).toHaveURL(/\/(today|office)$/);
+  await expect(page).toHaveURL(workspaceName ? /\/(today|office|account)$/ : /\/(today|office)$/);
+  if (workspaceName && new URL(page.url()).pathname === "/account") {
+    await page.getByRole("button", { name: `Otvori ${workspaceName}`, exact: true }).click();
+    await expect(page).toHaveURL(/\/(today|office)$/);
+  }
 }
 async function localBundles(page: Page) {
   return page.evaluate(async () => {
@@ -287,7 +293,7 @@ test("workspace and account changes isolate downloaded data; denied and withdraw
       "delete from public.visit_assignees where organization_id=$1 and visit_id=$2",
       [orgA, unassigned.visitId],
     );
-    await login(page, identity.email, identity.password);
+    await login(page, identity.email, identity.password, orgNameA);
     await page.goto("/today");
     const denied = await page.request.get(
       `/api/field/visits/${unassigned.visitId}`,
@@ -344,6 +350,7 @@ test("workspace and account changes isolate downloaded data; denied and withdraw
         exact: true,
       }),
     ).toBeVisible();
+    await openWorkspaceControls(page);
     await page
       .getByRole("combobox", { name: "Radni prostor", exact: true })
       .selectOption(orgB);
@@ -369,6 +376,7 @@ test("workspace and account changes isolate downloaded data; denied and withdraw
       0,
     );
     await page.goto("/today");
+    await openWorkspaceControls(page);
     await page
       .getByRole("combobox", { name: "Radni prostor", exact: true })
       .selectOption(fixture.org);

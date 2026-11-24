@@ -1,3 +1,5 @@
+import { requireWorkspace } from "@/features/workspaces/dal";
+import { OverviewError } from "@/features/office/overview-state";
 import { DraftBoundary } from "@/features/offline/draft-boundary";
 import Link from "next/link";
 import { returnSource } from "@/features/follow-ups/dal";
@@ -262,10 +264,13 @@ export async function VisitWorkspace({
   );
 }
 export async function ReviewQueue() {
-  const visits = await reviewQueue();
+  await requireWorkspace(["owner", "coordinator"]);
+  let visits: Awaited<ReturnType<typeof reviewQueue>>;
+  try { visits = await reviewQueue(); }
+  catch { return <OverviewError label="Nalozi za pregled" />; }
   return (
-    <section className="card my-6">
-      <h2>Čeka pregled · {visits.length}</h2>
+    <section className="card my-6" aria-labelledby="review-queue-heading">
+      <h2 id="review-queue-heading">Čeka pregled · {visits.length}</h2>
       {!visits.length && <p>Nema poseta za pregled.</p>}
       {visits.map((v) => (
         <p key={v.id}>

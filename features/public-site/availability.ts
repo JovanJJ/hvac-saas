@@ -1,5 +1,6 @@
-// UX07 will replace the local preview with a working demonstration request.
-export const demoAvailable = process.env.NODE_ENV === "development";
+// UX07 records validated requests durably through the restricted public RPC.
+export const demoAvailable = true;
 
-// UX08 enables these after verified operator facts and actual pages are ready.
-export const legalPagesAvailable = false;
+// UX08 drafts are local only until operator facts and legal/commercial wording are reviewed.
+// This gate controls both links and routes; do not enable production drafts via runtime config.
+export const legalPagesAvailable = process.env.NODE_ENV === "development";

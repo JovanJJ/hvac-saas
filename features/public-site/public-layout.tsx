@@ -4,6 +4,7 @@ import { publicAccountLink } from "./account-link";
 import { PublicNavigation } from "./public-navigation";
 import { demoAvailable } from "./availability";
 import { PublicContainer } from "./components";
+import { LegalLinks } from "./legal-links";
 import "./public-site.css";
 
 async function AccountAction() {
@@ -53,6 +54,7 @@ export function PublicLayout({ children }: { children: React.ReactNode }) {
           <div>
             <Link href="/" className="public-brand">teren<span>.</span></Link>
             <p>Softver za servisere klima-uređaja</p>
+            <LegalLinks />
           </div>
           <nav aria-label="Navigacija u podnožju">
             <Link href="/#kako-radi">Kako radi</Link>

@@ -1,26 +1,39 @@
-import Link from "next/link";
-import { notFound } from "next/navigation";
+import { randomUUID } from "node:crypto";
 import { Suspense } from "react";
+import { connection } from "next/server";
 import { PublicLayout } from "@/features/public-site/public-layout";
-import { pilotPlans, readDemoPlan } from "@/features/public-site/pilot-plans";
+import { PublicReportPreview, SampleReportLink } from "@/features/public-site/public-report-preview";
+import { readDemoPlan } from "@/features/public-site/pilot-plans";
+import { DemoForm } from "@/features/demo/demo-form";
 
-async function SelectedPlan({ searchParams }: PageProps<"/demo">) {
-  const plan = readDemoPlan((await searchParams).plan);
-  const selected = pilotPlans.find(item => item.id === plan);
-  return selected ? <p className="public-demo-plan">Plan koji vas zanima: <strong>{selected.name}</strong></p> : null;
+async function RequestForm({ searchParams }: PageProps<"/demo">) {
+  await connection();
+  const plan = readDemoPlan((await searchParams).plan) ?? "";
+  return <DemoForm operationId={randomUUID()} plan={plan} />;
 }
 
+export const metadata = { title: "Dogovorite demonstraciju | teren." };
+
 export default function Demo(props: PageProps<"/demo">) {
-  if (process.env.NODE_ENV !== "development") notFound();
   return (
     <PublicLayout>
-      <section className="public-intro">
-        <p className="public-eyebrow">Razvojni pregled</p>
+      <section className="public-intro max-w-3xl">
         <h1>Dogovorite demonstraciju</h1>
-        <Suspense fallback={null}><SelectedPlan {...props} /></Suspense>
-        <p>Obrazac za zahtev biće dostupan u narednom koraku izrade. Ova stranica trenutno ne prima zahteve.</p>
-        <Link href="/">Povratak na početnu</Link>
+        <p>Ostavite kontakt i predložićemo termin. Za 15 minuta pokazaćemo vam kako se jedan nalog prenosi sa terena u kancelariju.</p>
       </section>
+      <div className="grid items-start gap-10 pb-16 lg:grid-cols-2 lg:gap-16">
+        <Suspense fallback={<p role="status">Učitavanje obrasca…</p>}><RequestForm {...props} /></Suspense>
+        <aside aria-labelledby="demo-agenda" className="grid min-w-0 gap-6">
+          <PublicReportPreview />
+          <h2 id="demo-agenda" className="text-2xl font-semibold">Šta ćemo pokazati</h2>
+          <ol className="list-inside list-decimal space-y-3">
+            <li>Kako se dodeljuje nalog.</li>
+            <li>Kako tehničar beleži nalaz za svaki uređaj.</li>
+            <li>Kako kancelarija šalje PDF klijentu.</li>
+          </ol>
+          <SampleReportLink />
+        </aside>
+      </div>
     </PublicLayout>
   );
 }

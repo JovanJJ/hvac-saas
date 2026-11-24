@@ -4,6 +4,7 @@ import { ReceiptRefresh } from "./receipt-refresh";
 import { ReceiptDetails } from "./receipt-details";
 import type { ReportReceipt } from "./receipt-model";
 import Link from "next/link";
+import { OverviewError } from "@/features/office/overview-state";
 import { SharePanel } from "./share-panel";
 import type { ReportLink } from "./link-model";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -27,7 +28,10 @@ export async function RevisionLink({ visitId }: { visitId: string }) {
   );
 }
 export async function RecentReports() {
-  const reports = await reportList();
+  await requireWorkspace(["owner", "coordinator"]);
+  let reports: Awaited<ReturnType<typeof reportList>>;
+  try { reports = await reportList(); }
+  catch { return <OverviewError label="Izdati izveštaji" />; }
   return (
     <section className="card my-5">
       <h2>Izdati izveštaji</h2>

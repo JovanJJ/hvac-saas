@@ -45,6 +45,7 @@ export type Database = {
     };
     Views: Record<string, never>;
     Functions: {
+      submit_demo_request: { Args: { p_operation_id: string; p_name: string; p_email: string; p_company: string; p_plan: string }; Returns: string };
       owner_export: { Args: { p_organization_id: string; p_datasets?: string[]; p_site_id?: string }; Returns: unknown };
       handover_queue: { Args: { p_organization_id: string; p_filters?: unknown }; Returns: unknown };
       billing_review_detail: { Args: { p_organization_id: string; p_visit_id: string }; Returns: unknown };

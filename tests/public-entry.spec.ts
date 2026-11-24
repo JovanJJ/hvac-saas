@@ -84,11 +84,8 @@ for (const [email, label, destination] of [
   });
 }
 
-test("local demo preview is honest about unavailable submission", async ({ page }) => {
+test("demo request is reachable anonymously", async ({ page }) => {
   await page.goto("/demo");
   await expect(page.getByRole("heading", { name: "Dogovorite demonstraciju" })).toBeVisible();
-  await expect(page.getByText("Ova stranica trenutno ne prima zahteve.", { exact: false })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Pošalji zahtev" })).toHaveCount(0);
-  await page.getByRole("link", { name: "Povratak na početnu" }).click();
-  await expect(page).toHaveURL(/\/$/);
+  await expect(page.getByRole("button", { name: "Pošalji zahtev" })).toBeVisible();
 });

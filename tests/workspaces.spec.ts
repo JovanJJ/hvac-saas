@@ -1,3 +1,4 @@
+import { openWorkspaceControls } from "./staff-controls";
 import { expect, test, type Page } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
 import { createHash, randomBytes, randomUUID } from "node:crypto";
@@ -155,6 +156,7 @@ test("workspace creation, invite, role changes, revoked access and switching", a
     await expect(
       page.getByRole("heading", { name: technician.email, exact: true }),
     ).toHaveCount(0);
+    await openWorkspaceControls(page);
     await page
       .getByRole("combobox", { name: "Radni prostor", exact: true })
       .selectOption({ label: `${name} izmenjen · Vlasnik` });

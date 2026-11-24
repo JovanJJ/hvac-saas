@@ -1,3 +1,7 @@
+import { requireWorkspace } from "@/features/workspaces/dal";
+import { StaffPageHeading } from "@/components/ui/staff-page-heading";
+import { FirstSiteGuidance } from "@/features/office/overview";
+import { OverviewError } from "@/features/office/overview-state";
 import { Suspense } from "react";
 import Link from "next/link";
 import { randomUUID } from "node:crypto";
@@ -19,15 +23,17 @@ export async function ScheduleBoard({
 }: {
   searchParams: Promise<SearchParams>;
 }) {
-  const { visits, sites, staff, filters } = await scheduleSnapshot(
-    await searchParams,
-  );
+  await requireWorkspace(["owner", "coordinator"]);
+  let snapshot: Awaited<ReturnType<typeof scheduleSnapshot>>;
+  try { snapshot = await scheduleSnapshot(await searchParams); }
+  catch { return <><StaffPageHeading title="Raspored" description="Planirajte posete i pratite dodeljeni tim."
+    action={<Link href="/visits/new" className="button primary">Zakaži posetu</Link>} /><OverviewError label="Raspored" /></>; }
+  const { visits, sites, staff, filters, today } = snapshot;
   return (
     <>
-      <h1>Raspored</h1>
-      <p>
-        Datumi i vremena poseta prikazani su u vremenskoj zoni njihove lokacije.
-      </p>
+      <StaffPageHeading title="Raspored" description="Datumi i vremena poseta prikazani su u vremenskoj zoni njihove lokacije."
+        action={<Link href="/visits/new" className="button primary">Zakaži posetu</Link>} />
+      {!sites.length && <FirstSiteGuidance />}
       <nav aria-label="Prikaz rasporeda" className="my-5 flex flex-wrap gap-3">
         {(["day", "week"] as const).map((view) => (
           <Link
@@ -105,11 +111,13 @@ export async function ScheduleBoard({
           />
           Prikaži i otkazane posete
         </label>
-        <button className="button primary" type="submit">
-          Prikaži raspored
-        </button>
+        <div className="flex flex-wrap items-center gap-4">
+          <button className="button primary" type="submit">Prikaži raspored</button>
+          <Link className="underline" href={scheduleLink({ ...filters, site: "", technician: "", cancelled: false }, filters.date)}>Poništi filtere</Link>
+        </div>
       </form>
-      <nav aria-label="Datumi rasporeda" className="my-5 flex flex-wrap gap-3">
+      <nav aria-label="Datumi rasporeda" className="my-5 flex flex-wrap items-center gap-3">
+        <Link className="button secondary" href={scheduleLink(filters, today)}>Danas</Link>
         <Link
           className="button secondary"
           href={scheduleLink(

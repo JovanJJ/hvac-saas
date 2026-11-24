@@ -1,6 +1,7 @@
 import { demoAvailable } from "./availability";
 import { PublicActionLink, PublicSectionHeading } from "./components";
 import { pilotPlans } from "./pilot-plans";
+import { LegalLinks } from "./legal-links";
 
 export function PricingSection() {
   return (
@@ -24,6 +25,7 @@ export function PricingSection() {
         ))}
       </div>
       <p className="public-pricing-note">Oba predloga koriste isti tok servisne posete. Nastavak korišćenja posebno dogovaramo; nema automatskog zaduženja kartice.</p>
+      <LegalLinks />
     </section>
   );
 }

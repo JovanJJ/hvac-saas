@@ -793,12 +793,15 @@
     }
   }
   @media print {
+    .staff-shell > [data-staff-navigation],
+    .staff-shell > .sr-only,
     .staff-shell > header,
     .staff-shell > footer,
     .staff-shell > main > .eyebrow {
       display: none;
     }
     .staff-shell {
+      display: block;
       padding: 0;
     }
     @page {

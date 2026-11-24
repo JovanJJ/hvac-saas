@@ -51,15 +51,14 @@ test("pricing plan survives navigation and rejects unknown or repeated values", 
     await page.goto("/#cene");
     await page.getByRole("article", { name: label, exact: true }).getByRole("link").click();
     await expect(page).toHaveURL(new RegExp(`/demo\\?plan=${plan}$`));
-    await expect(page.getByText(`Plan koji vas zanima: ${label}`, { exact: true })).toBeVisible();
-    await expect(page.getByText("Ova stranica trenutno ne prima zahteve.", { exact: false })).toBeVisible();
+    await expect(page.getByLabel("Plan koji vas zanima (opciono)")).toHaveValue(plan);
     await page.reload();
-    await expect(page.getByText(`Plan koji vas zanima: ${label}`, { exact: true })).toBeVisible();
+    await expect(page.getByLabel("Plan koji vas zanima (opciono)")).toHaveValue(plan);
   }
   for (const query of ["", "?plan=unknown", "?plan=TIM", "?plan=tim&plan=solo", "?plan=%3Cscript%3Ebad%3C%2Fscript%3E"]) {
     await page.goto(`/demo${query}`);
     await expect(page.getByRole("heading", { name: "Dogovorite demonstraciju" })).toBeVisible();
-    await expect(page.getByText(/^Plan koji vas zanima:/)).toHaveCount(0);
+    await expect(page.getByLabel("Plan koji vas zanima (opciono)")).toHaveValue("");
   }
 });
 
