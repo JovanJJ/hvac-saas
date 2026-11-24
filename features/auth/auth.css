@@ -1,0 +1,30 @@
+.auth-surface {
+  --ink: #152f36;
+  --green: #08665f;
+  --muted: #475f63;
+  --border: #cbd9d3;
+  color: var(--ink);
+  background: #f8faf7;
+}
+.auth-surface .auth-panel {
+  width: 100%;
+  min-width: 0;
+  max-width: 480px;
+  padding: 36px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: white;
+  box-shadow: 0 8px 24px #152f3608;
+}
+.auth-surface .auth-panel-wide { max-width: 760px; }
+.auth-surface .auth-panel > a:first-child { display: block; width: fit-content; }
+.auth-surface h1 { font-size: 32px; line-height: 1.25; margin-bottom: 18px; }
+.auth-surface p { overflow-wrap: anywhere; }
+.auth-surface .button { min-height: 48px; font-size: 16px; }
+.auth-surface :focus-visible { outline: 3px solid var(--green); outline-offset: 4px; }
+.auth-surface .auth-account-note { margin-top: 20px; color: var(--muted); font-size: 14px; }
+@media (max-width: 600px) {
+  .auth-surface .auth-panel { padding: 28px 20px; border-radius: 12px; }
+  .auth-surface h1 { font-size: 29px; }
+  .auth-surface .button { max-width: 100%; white-space: normal; }
+}

@@ -39,7 +39,7 @@ test("register through the UI, confirm the captured email and reach M1b", async 
     // Follow the real GoTrue link in the same browser; the PKCE cookie must survive signup.
     await page.goto(match[1].replaceAll("&amp;", "&"));
     await expect(
-      page.getByRole("heading", { name: "Vaš radni prostor", exact: true }),
+      page.getByRole("heading", { name: "Vaš nalog", exact: true }),
     ).toBeVisible();
     await expect(page.getByText("Još nemate radni prostor")).toBeVisible();
     await page

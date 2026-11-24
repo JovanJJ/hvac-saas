@@ -47,7 +47,7 @@ test("protected visit, invitation and invalid report keep their direct destinati
   await expect(page).toHaveURL(new RegExp(`/sign-in\\?next=${encodeURIComponent(visit)}$`));
   const invitation = `/invite/${"a".repeat(43)}`;
   await page.goto(`/sign-in?next=${encodeURIComponent(invitation)}`);
-  await page.getByRole("link", { name: "Novi nalog", exact: true }).click();
+  await page.getByRole("link", { name: "Napravi nalog", exact: true }).click();
   await expect(page).toHaveURL(new RegExp(`/sign-up\\?next=${encodeURIComponent(invitation)}$`));
   await page.goto("/r/not-a-valid-token");
   await expect(page.getByRole("heading", { name: "Link nije dostupan" })).toBeVisible();

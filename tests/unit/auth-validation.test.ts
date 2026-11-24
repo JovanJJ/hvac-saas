@@ -72,6 +72,13 @@ test("callback destinations cannot redirect outside the allowed account routes",
   );
   assert.equal(safeDestination("/reset-password"), "/reset-password");
   assert.equal(safeDestination("/office"), "/office");
+  for (const root of ["customers", "sites", "systems", "schedule", "imports", "maintenance"]) {
+    const path = `/${root}/a1000000-0000-4000-8000-000000000001`;
+    assert.equal(safeDestination(path), path);
+    assert.equal(safeDestination(path + "/../../account"), "/account");
+    assert.equal(safeDestination(path + "?next=https://evil.invalid"), "/account");
+  }
+  assert.equal(safeDestination(["/today", "/office"]), "/account");
   assert.equal(
     safeDestination("/invite/" + "a".repeat(43)),
     "/invite/" + "a".repeat(43),

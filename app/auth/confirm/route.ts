@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
           type === "recovery"
             ? "/reset-password"
             : safeDestination((await cookies()).get("teren_auth_next")?.value);
-        (await cookies()).delete("teren_auth_next");
+        if (type !== "recovery") (await cookies()).delete("teren_auth_next");
       }
     } catch {
       /* Never echo tokens or provider errors. */

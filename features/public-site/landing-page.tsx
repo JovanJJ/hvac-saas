@@ -6,6 +6,8 @@ import {
 import { PublicReportPreview, SampleReportLink } from "./public-report-preview";
 import { WorkflowCapture, type WorkflowStage } from "./workflow-capture";
 import { WorkedExample } from "./worked-example";
+import { PricingSection } from "./pricing-section";
+import { FaqSection } from "./faq-section";
 
 const workflow = [
   {
@@ -77,14 +79,8 @@ export function LandingPage() {
       <LandingHero />
       <WorkflowSection />
       <WorkedExample />
-      <section className="public-section" aria-labelledby="cene">
-        <PublicSectionHeading id="cene">Cene</PublicSectionHeading>
-        <p>Pilot je namenjen samostalnim serviserima i timovima. Komercijalni uslovi biće objavljeni pre početka prodaje.</p>
-      </section>
-      <section className="public-section" aria-labelledby="pitanja">
-        <PublicSectionHeading id="pitanja">Pitanja</PublicSectionHeading>
-        <p>Već imate nalog? Prijavite se da otvorite svoj radni prostor. Ako ste dobili poziv firme, otvorite link iz poziva i koristite imejl adresu na koju je poslat.</p>
-      </section>
+      <PricingSection />
+      <FaqSection />
       <ClosingSection />
     </>
   );

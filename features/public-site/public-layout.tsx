@@ -55,6 +55,9 @@ export function PublicLayout({ children }: { children: React.ReactNode }) {
             <p>Softver za servisere klima-uređaja</p>
           </div>
           <nav aria-label="Navigacija u podnožju">
+            <Link href="/#kako-radi">Kako radi</Link>
+            <Link href="/#cene">Cene</Link>
+            <Link href="/#pitanja">Pitanja</Link>
             {demoAvailable && <Link href="/demo">Demonstracija</Link>}
             <Suspense fallback={<AccountPending />}><AccountAction /></Suspense>
             <Suspense fallback={null}><RegistrationAction /></Suspense>

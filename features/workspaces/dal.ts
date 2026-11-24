@@ -11,6 +11,7 @@ import {
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type { StaffRole } from "@/lib/supabase/database.types";
 import { idSchema, tokenSchema } from "./validation";
+import { safeDestination } from "@/features/auth/validation";
 
 export const workspaceCookie = (userId: string) => `teren_workspace_${userId}`;
 export const onboardingCookie = (userId: string) =>
@@ -32,14 +33,15 @@ export const selectedWorkspace = cache(async () => {
     workspaces,
     workspace: selected
       ? workspaces.find((row) => row.organization.id === selected)
-      : workspaces[0],
+      : workspaces.length === 1 ? workspaces[0] : undefined,
   };
 });
-export async function requireWorkspace(roles?: StaffRole[]) {
+export async function requireWorkspace(roles?: StaffRole[], destination?: string) {
   const context = await selectedWorkspace();
   if (!context.workspaces.length) redirect("/onboarding");
-  if (!context.workspace || (roles && !roles.includes(context.workspace.role)))
-    notFound();
+  if (!context.workspace)
+    redirect(destination ? `/account?next=${encodeURIComponent(safeDestination(destination))}` : "/account");
+  if (roles && !roles.includes(context.workspace.role)) notFound();
   return { ...context, workspace: context.workspace };
 }
 export async function landingPath() {

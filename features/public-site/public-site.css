@@ -208,3 +208,41 @@
 @media (max-width: 600px) {
   .public-site .public-example-rows dl { grid-template-columns: minmax(0, 1fr); }
 }
+
+.public-site .public-pricing,
+.public-site .public-faq { padding-block: 40px 56px; }
+.public-site .public-pilot-label {
+  display: inline-block;
+  margin-block: 12px 16px;
+  padding: 4px 12px;
+  background: var(--public-sage);
+  color: var(--public-primary);
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+}
+.public-site .public-price-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; margin-top: 32px; }
+.public-site .public-price-card { display: flex; flex-direction: column; gap: 18px; min-width: 0; padding: 32px; border: 1px solid var(--public-border); border-radius: 12px; background: white; }
+.public-site .public-price-featured { border: 2px solid var(--public-primary); }
+.public-site .public-price-card h3 { margin: 0; font-size: 26px; }
+.public-site .public-price { display: flex; flex-wrap: wrap; align-items: baseline; gap: 12px; color: var(--public-ink); }
+.public-site .public-price strong { font-size: 36px; line-height: 1.2; letter-spacing: -1px; }
+.public-site .public-price span { font-size: 16px; color: var(--public-muted); }
+.public-site .public-plan-seats { color: var(--public-ink); font-weight: 600; }
+.public-site .public-plan-description { flex: 1; }
+.public-site .public-price-card .public-button { align-self: flex-start; }
+.public-site .public-pricing-note { margin-top: 24px; font-size: 15px; }
+.public-site .public-faq-items { max-width: 860px; margin-top: 28px; }
+.public-site .public-faq details { border-bottom: 1px solid var(--public-border); }
+.public-site .public-faq summary { display: flex; align-items: center; justify-content: space-between; gap: 20px; min-height: 60px; padding-block: 20px; cursor: pointer; font-weight: 600; list-style: none; }
+.public-site .public-faq summary::-webkit-details-marker { display: none; }
+.public-site .public-faq summary svg { flex-shrink: 0; color: var(--public-primary); }
+.public-site .public-faq details[open] .public-faq-vertical { display: none; }
+.public-site .public-faq details > p { padding-bottom: 24px; max-width: 760px; color: var(--public-muted); }
+.public-site .public-demo-plan { margin-bottom: 20px; color: var(--public-primary); }
+@media (max-width: 600px) {
+  .public-site .public-price-cards { grid-template-columns: minmax(0, 1fr); }
+  .public-site .public-price-card { padding: 24px 20px; }
+  .public-site .public-price strong { font-size: 32px; }
+  .public-site .public-price-card .public-button { width: 100%; }
+}

@@ -5,15 +5,17 @@ import { connection } from "next/server";
 import { AuthForm } from "./auth-form";
 import type { AuthMode } from "./types";
 import { hasSupabaseConfig } from "@/lib/supabase/config";
+import { LegalLinks } from "@/features/public-site/legal-links";
+import "./auth.css";
 
 const copy = {
   "sign-in": {
-    title: "Dobro došli nazad.",
+    title: "Prijava",
     description: "Prijavite se da nastavite rad u svom timu.",
   },
   "sign-up": {
-    title: "Napravite svoj nalog.",
-    description: "Potvrdite email adresu pre prvog ulaska.",
+    title: "Napravi nalog",
+    description: "Ako ste dobili poziv od poslodavca, koristite imejl adresu navedenu u pozivu.",
   },
   "forgot-password": {
     title: "Oporavak lozinke",
@@ -24,10 +26,10 @@ const copy = {
     description: "Posle promene prijavite se ponovo na svojim uređajima.",
   },
 };
-export function AuthShell({ children }: { children: React.ReactNode }) {
+export function AuthShell({ children, wide = false }: { children: React.ReactNode; wide?: boolean }) {
   return (
-    <main className="auth-page">
-      <div className="w-full max-w-md rounded-xl border border-[#dce4df] bg-white p-6 shadow-sm sm:p-9">
+    <main className="auth-page auth-surface">
+      <div className={`auth-panel ${wide ? "auth-panel-wide" : ""}`}>
         <Link
           href="/"
           className="mb-8 inline-block text-3xl font-extrabold tracking-tight no-underline"
@@ -62,6 +64,8 @@ export async function AuthScreen({
       )}
       {notice}
       <AuthForm mode={mode} configured={configured} nextPath={nextPath} />
+      {mode === "sign-up" && <p className="auth-account-note">Pravljenje naloga ne pokreće probni period niti plaćenu pretplatu. Potvrdite imejl adresu pre prijave.</p>}
+      <LegalLinks />
       {process.env.NODE_ENV === "development" &&
         process.env.LOCAL_AUTH_INBOX_URL &&
         (mode === "sign-up" || mode === "forgot-password") && (
@@ -95,7 +99,7 @@ export async function AuthScreen({
         )}
         {mode === "sign-in" && (
           <>
-            <Link href="/forgot-password">Zaboravljena lozinka?</Link>
+            <Link href={nextPath ? `/forgot-password?next=${encodeURIComponent(nextPath)}` : "/forgot-password"}>Zaboravili ste lozinku?</Link>
             <Link
               href={
                 nextPath
@@ -103,7 +107,7 @@ export async function AuthScreen({
                   : "/sign-up"
               }
             >
-              Novi nalog
+              Napravi nalog
             </Link>
           </>
         )}

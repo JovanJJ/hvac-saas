@@ -36,7 +36,7 @@ async function InvitationContent({ params }: PageProps<"/invite/[token]">) {
         <>
           <p className="mt-5 break-all">Prijavljeni ste kao {user.email}.</p>
           <AcceptInvitationForm token={token} />
-          <form action={signOut} className="mt-5">
+          <form action={signOut} data-offline-boundary="discard" className="mt-5">
             <input type="hidden" name="next" value={next} />
             <button type="submit" className="button secondary">
               Promeni nalog

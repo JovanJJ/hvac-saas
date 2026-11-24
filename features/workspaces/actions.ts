@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import { authCookieOptions, appOrigin } from "@/lib/supabase/config";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { accountWorkspaces, requireUser } from "@/features/auth/dal";
+import { safeDestination } from "@/features/auth/validation";
 import {
   hashInvitation,
   landingPath,
@@ -103,6 +104,8 @@ export async function switchWorkspace(
   if (!target) return fail("Radni prostor više nije dostupan ovom nalogu.");
   await selectOrganization(user.id, target.organization.id);
   revalidatePath("/", "layout");
+  const next = form.get("next");
+  if (next) redirect(safeDestination(next));
   redirect(target.role === "technician" ? "/today" : "/office");
 }
 export async function updateWorkspace(

@@ -11,6 +11,7 @@ async function OnboardingContent() {
       <p className="mb-6 text-sm text-[#60716c]">
         Unesite podatke firme. Možete nastaviti sami ili zatim pozvati tim.
       </p>
+      <p className="mb-6 text-sm">Ako ste dobili poziv da se pridružite postojećoj firmi, otvorite taj link. Nije potrebno da pravite novu firmu.</p>
       <WorkspaceForm operationId={operationId} />
       <Link href="/account" className="mt-5 block text-sm underline">
         Moj nalog

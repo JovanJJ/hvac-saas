@@ -84,6 +84,7 @@ export async function signUp(
       ...authCookieOptions(),
       maxAge: 3600,
     });
+  else (await cookies()).delete("teren_auth_next");
   try {
     const supabase = await createSupabaseServerClient({ writable: true });
     const { data, error } = await supabase.auth.signUp({
@@ -108,7 +109,7 @@ export async function signUp(
   return {
     status: "success",
     message:
-      "Ako je registracija moguća, uputstvo za potvrdu stiže na vašu email adresu. Zatim se prijavite.",
+      "Proverite imejl i potvrdite adresu. Ako je registracija moguća, uputstvo za potvrdu stiže na vašu email adresu. Zatim se prijavite.",
     email: input.data.email,
   };
 }
@@ -125,6 +126,11 @@ export async function requestRecovery(
       email: String(form.get("email") ?? ""),
     };
   if (!hasSupabaseConfig()) return unavailable;
+  const next = form.get("next");
+  if (next) (await cookies()).set("teren_auth_next", safeDestination(next), {
+    ...authCookieOptions(), maxAge: 3600,
+  });
+  else (await cookies()).delete("teren_auth_next");
   try {
     const supabase = await createSupabaseServerClient({ writable: true });
     await supabase.auth.resetPasswordForEmail(input.data, {
@@ -177,7 +183,8 @@ export async function resetPassword(
   }
   await rotateOfflineEpoch();
   revalidatePath("/", "layout");
-  redirect("/sign-in?message=password-updated");
+  const next = (await cookies()).get("teren_auth_next")?.value;
+  redirect(next ? `/sign-in?message=password-updated&next=${encodeURIComponent(safeDestination(next))}` : "/sign-in?message=password-updated");
 }
 
 export async function signOut(form?: FormData) {

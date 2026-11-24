@@ -86,7 +86,7 @@ async function AuthorizedContent({
   children: (context: StaffContext) => React.ReactNode;
 }) {
   await requireUser(path);
-  const context = await requireWorkspace(roles);
+  const context = await requireWorkspace(roles, path);
   return <StaffShell context={context}>{children(context)}</StaffShell>;
 }
 export function StaffPage({

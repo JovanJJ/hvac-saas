@@ -61,9 +61,13 @@ export function safeDestination(value: unknown) {
       "/settings/team",
       "/settings/workspace",
       "/settings/exports",
+      "/maintenance",
+      "/maintenance/new",
+      "/imports",
     ].includes(value)
   )
     return value;
+  if (/^\/(?:customers|sites|systems|schedule|imports|maintenance)\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value)) return value;
   if (
     /^\/visits\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}(?:\/(?:review|preview))?$/i.test(
       value,

@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { appOrigin } from "@/lib/supabase/config";
 import { safeDestination } from "@/features/auth/validation";
+import { cookies } from "next/headers";
 
 export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get("code");
@@ -13,7 +14,8 @@ export async function GET(request: NextRequest) {
       const { error } = await supabase.auth.exchangeCodeForSession(code);
       if (!error) {
         await rotateOfflineEpoch();
-        path = safeDestination(request.nextUrl.searchParams.get("next"));
+        path = safeDestination(request.nextUrl.searchParams.get("next") || (await cookies()).get("teren_auth_next")?.value);
+        if (path !== "/reset-password") (await cookies()).delete("teren_auth_next");
       }
     } catch {
       /* Never echo auth codes or provider errors. */
