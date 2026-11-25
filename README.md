@@ -1,5 +1,7 @@
 # Customer service report
 
+Current UI implementation and verified acceptance: [UI_UX_LAUNCH.md](UI_UX_LAUNCH.md). The report contract is owned by [REPORTS.md](REPORTS.md); earlier milestone verification notes below are historical. UX14 public canonical/social metadata uses validated APP_URL at build time and runtime; see [ARCHITECTURE.md](ARCHITECTURE.md#ux14-search-and-social-metadata) before building a release image. Staging, operator/legal and physical-device gates remain separate.
+
 Issue one Serbian Latin service report per visit, with immutable numbered revisions. It is an operational record for a customer representative and for the next technician. Receipt, billing review, approval of additional spending and a statutory record are different events.
 
 ## Layout
@@ -121,7 +123,7 @@ After disconnecting and closing/reopening the browser/app, Today lists downloade
 
 Account/workspace switches hide other partitions, and logout clears read-only copies while retaining committed pending drafts in locked partitions. A successful reconnect checks the current assignment inventory and removes withdrawn downloads. Private photos, editing and offline submission are not part of M4a. M4b durable drafts are implemented below; replay/photo work follows in later tickets.
 
-Apply `npm run db:migrate` through 037. No new credentials are required. M4b adds the pinned esbuild development dependency; install from the lockfile. `npm run offline:build` prepares the public worker and revision metadata; normal dev/build/typecheck/e2e scripts run it automatically. After changing public shell assets during a running development session, run it again to update the content revision. Do not edit the generated files. The worker caches only nine public shell files; private snapshots remain in partitioned IndexedDB.
+Apply `npm run db:migrate` through 037. No new credentials are required. M4b adds the pinned esbuild development dependency; install from the lockfile. `npm run offline:build` prepares the public worker and revision metadata; normal dev/build/typecheck/e2e scripts run it automatically. After changing public shell assets during a running development session, run it again to update the content revision. Do not edit the generated files. The worker caches only the public files declared in `features/offline/shell-assets.json`; private snapshots remain in partitioned IndexedDB.
 
 Run `npm run test:db`, `npm run typecheck`, `npm run lint`, `npm test`, `npm run build` and `npm run test:e2e -- tests/offline-visits.spec.ts --workers=2`. The offline browser suite uses a temporary persistent Chromium profile, closes the entire browser process, reopens it with the connection disabled, and checks 4/3/2 totals, missing downloads, removal, quota/refresh failures, cross-tab identity changes, second-workspace isolation and withdrawn assignments. It deletes its fictional fixtures and temporary profiles afterward. Real iOS/Android installation, physical airplane mode and storage-pressure checks have not been performed here; they remain the M4f device gate. Next: **M4f — Device lifecycle and offline gate**.
 

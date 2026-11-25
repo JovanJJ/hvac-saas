@@ -83,11 +83,59 @@ export function ReportDocument({
   report,
   photoSources,
   draft = false,
+  scrollableSummary = false,
 }: {
   report: CustomerReport;
   photoSources?: Record<string, string>;
   draft?: boolean;
+  scrollableSummary?: boolean;
 }) {
+  const summary = (
+<table className="my-5 w-full table-fixed border-collapse text-left text-xs">
+        <caption className="my-3 text-left font-bold">Pregled sistema</caption>
+        <thead>
+          <tr>
+            {["Sistem", "Prostorija", "Ishod", "Sledeća radnja"].map(
+              (label) => (
+                <th key={label} className="break-words border p-2 align-top">
+                  {label}
+                </th>
+              ),
+            )}
+          </tr>
+        </thead>
+        <tbody>
+          {[...report.items]
+            .sort(
+              (a, b) =>
+                Number(
+                  b.outcome === "repair_needed" || b.outcome === "no_access",
+                ) -
+                Number(
+                  a.outcome === "repair_needed" || a.outcome === "no_access",
+                ),
+            )
+            .map((item) => (
+              <tr key={item.code}>
+                <td className="break-words border p-2 align-top">
+                  {item.code}
+                </td>
+                <td className="break-words border p-2 align-top">
+                  {item.room}
+                </td>
+                <td className="break-words border p-2 align-top">
+                  {outcomeLabels[item.outcome]}
+                </td>
+                <td className="break-words border p-2 align-top">
+                  {item.followUp
+                    ? `${item.followUp.state === "completed" ? "Završeno: " : ""}${actionLabels[item.followUp.kind]}`
+                    : "—"}
+                </td>
+              </tr>
+            ))}
+        </tbody>
+      </table>
+  );
   return (
     <article
       className="report mx-auto my-6 max-w-[210mm] bg-white p-5 sm:p-10"
@@ -146,50 +194,7 @@ export function ReportDocument({
         </p>
       </header>
       <ReportTotals counts={report.totals} />
-      <table className="my-5 w-full table-fixed border-collapse text-left text-xs">
-        <caption className="my-3 text-left font-bold">Pregled sistema</caption>
-        <thead>
-          <tr>
-            {["Sistem", "Prostorija", "Ishod", "Sledeća radnja"].map(
-              (label) => (
-                <th key={label} className="break-words border p-2 align-top">
-                  {label}
-                </th>
-              ),
-            )}
-          </tr>
-        </thead>
-        <tbody>
-          {[...report.items]
-            .sort(
-              (a, b) =>
-                Number(
-                  b.outcome === "repair_needed" || b.outcome === "no_access",
-                ) -
-                Number(
-                  a.outcome === "repair_needed" || a.outcome === "no_access",
-                ),
-            )
-            .map((item) => (
-              <tr key={item.code}>
-                <td className="break-words border p-2 align-top">
-                  {item.code}
-                </td>
-                <td className="break-words border p-2 align-top">
-                  {item.room}
-                </td>
-                <td className="break-words border p-2 align-top">
-                  {outcomeLabels[item.outcome]}
-                </td>
-                <td className="break-words border p-2 align-top">
-                  {item.followUp
-                    ? `${item.followUp.state === "completed" ? "Završeno: " : ""}${actionLabels[item.followUp.kind]}`
-                    : "—"}
-                </td>
-              </tr>
-            ))}
-        </tbody>
-      </table>
+      {scrollableSummary ? <div className="report-summary-scroll" role="region" aria-label="Pregled sistema · pomeranje tabele" tabIndex={0}>{summary}</div> : summary}
       {report.items.map((item) => (
         <div key={item.code} className="report-system">
           <SystemResult item={item} />

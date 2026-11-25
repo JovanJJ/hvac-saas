@@ -44,7 +44,8 @@ for (const width of [360, 390, 1440]) {
     expect(await action.evaluate((element) => getComputedStyle(element).outlineStyle)).not.toBe("none");
     await page.keyboard.press("Enter");
     await expect(page).toHaveURL(/\/demo$/);
-    await expect(page.getByText("Ova stranica trenutno ne prima zahteve.", { exact: false })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Dogovorite demonstraciju", exact: true })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Pošalji zahtev", exact: true })).toBeVisible();
   });
 }
 

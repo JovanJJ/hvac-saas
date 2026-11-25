@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { configuredAppOrigin } from "./lib/app-origin";
 import { resolve } from "node:path";
 import { PHASE_DEVELOPMENT_SERVER } from "next/constants";
 
@@ -12,6 +13,8 @@ export default function nextConfig(phase: string): NextConfig {
         };
   return {
     output: "standalone",
+    // Inline the public origin identically in prerendered and streamed metadata.
+    env: { NEXT_PUBLIC_SITE_ORIGIN: configuredAppOrigin(process.env) },
     async headers() {
       return [
         {
@@ -29,6 +32,7 @@ export default function nextConfig(phase: string): NextConfig {
         {
           source: "/offline/:path*",
           headers: [
+            { key: "X-Robots-Tag", value: "noindex, nofollow, noarchive" },
             { key: "X-Content-Type-Options", value: "nosniff" },
             { key: "Referrer-Policy", value: "no-referrer" },
             {

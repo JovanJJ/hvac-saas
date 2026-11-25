@@ -6,3 +6,5 @@ export default function Page({
 }) {
   return <VisitRoute params={params} view="review" />;
 }
+
+export const metadata = { title: "Kancelarijski pregled" };

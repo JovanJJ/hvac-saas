@@ -295,7 +295,7 @@ export async function CustomerPreview({ id }: { id: string }) {
           </Link>
         )}
       </div>
-      <ReportDocument report={preview.data} />
+      <ReportDocument report={preview.data} scrollableSummary />
     </>
   );
 }

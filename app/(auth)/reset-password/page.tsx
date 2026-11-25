@@ -12,3 +12,5 @@ export default function ResetPasswordPage() {
     </AuthBoundary>
   );
 }
+
+export const metadata = { title: "Nova lozinka" };

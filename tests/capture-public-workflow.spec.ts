@@ -110,11 +110,12 @@ test("capture the same isolated fictional visit through schedule, field and offi
     const report = office.getByRole("article", { name: "Nacrt servisnog izveštaja" });
     await expect(report.getByRole("definition")).toHaveText(["4", "3", "2"]);
     await expect(report).toContainText("Prostorija je zaključana");
-    const table = report.getByRole("table");
+    const table = report.getByRole("region", { name: "Pregled sistema · pomeranje tabele" });
     await expect(table).not.toContainText("@");
     await capture("office-desktop", office, [report.locator("dl[aria-label='Pregled rezultata']"), table]);
     await office.setViewportSize({ width: 390, height: 1000 });
-    await capture("office-mobile", office, [report.locator("dl[aria-label='Pregled rezultata']"), table]);
+    // A static phone illustration cannot be scrolled: show the complete totals instead of clipping columns.
+    await capture("office-mobile", office, [report.locator("dl[aria-label='Pregled rezultata']")]);
     await writeFile("public/primeri/workflow.json", JSON.stringify({
       fictional: true, scenario: publicReport.reference, site: "JA-02", date: "2026-11-12",
       totals: publicReport.totals, assets,

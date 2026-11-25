@@ -11,3 +11,5 @@ export default function Page({
     </StaffPage>
   );
 }
+
+export const metadata = { title: "Novi plan održavanja" };

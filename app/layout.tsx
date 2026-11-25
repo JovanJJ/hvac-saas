@@ -4,7 +4,8 @@ import "./globals.css";
 import "@/features/reports/print.css";
 
 export const metadata: Metadata = {
-  title: "Teren — HVAC servis",
+  title: { default: "Teren — HVAC servis", template: "%s | teren." },
+  robots: { index: false, follow: false, noarchive: true },
   icons: { apple: "/offline/v1/icon-192.png" },
   description: "Radni prostor za HVAC servisne timove.",
 };

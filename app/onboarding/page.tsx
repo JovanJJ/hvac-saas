@@ -26,3 +26,5 @@ export default function OnboardingPage() {
     </AuthBoundary>
   );
 }
+
+export const metadata = { title: "Podešavanje firme" };

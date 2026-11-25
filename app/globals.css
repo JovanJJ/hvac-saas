@@ -1,3 +1,5 @@
+@import "../features/reports/screen.css";
+@import "../features/reports/guest.css";
 @import "../features/office/work.css";
 @import "../features/field/field.css";
 @layer theme, base, components, utilities;

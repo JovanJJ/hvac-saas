@@ -30,3 +30,5 @@ async function TodayContent() {
 export default function Page() {
   return <StaffPage path="/today">{() => <TodayContent />}</StaffPage>;
 }
+
+export const metadata = { title: "Danas" };

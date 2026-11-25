@@ -7,3 +7,5 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
     </StaffPage>
   );
 }
+
+export const metadata = { title: "Pregled uvoza" };

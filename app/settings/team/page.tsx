@@ -98,3 +98,5 @@ export default function TeamPage() {
     </StaffPage>
   );
 }
+
+export const metadata = { title: "Tim i pozivi" };

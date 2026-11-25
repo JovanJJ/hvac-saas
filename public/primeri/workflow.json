@@ -12,32 +12,32 @@
     "schedule-desktop": {
       "src": "/primeri/workflow-schedule-desktop.webp",
       "width": 1200,
-      "height": 566,
-      "sha256": "efb6126e2f1d6ca026a50fd3759b5176afca73129c63cd2ae1535e787b3151f7"
+      "height": 707,
+      "sha256": "08b085d76f61ff3f21e5463e9d33317314a9d543b1e3a3b66bda6d817e6d1061"
     },
     "schedule-mobile": {
       "src": "/primeri/workflow-schedule-mobile.webp",
       "width": 780,
-      "height": 1205,
-      "sha256": "6fa6c2187c1f342dde89eebb320306811fbab276570a2e89c8d950b1bdab7e73"
+      "height": 1178,
+      "sha256": "8243ace851078dcc50a3b64efab1cbcb111aee1b135ce571a3dbf50f817b5a1a"
     },
     "field": {
       "src": "/primeri/workflow-field.webp",
       "width": 780,
-      "height": 1299,
-      "sha256": "5dfc89b64d6a7d5c0a58eaea3c741f8c0ee42d9617d1963a78277f368a4c2b7c"
+      "height": 1730,
+      "sha256": "98b3439722c62dd230d0cd6bc72d81ba3c4ec7192208e877dbf717ed180abf6b"
     },
     "office-desktop": {
       "src": "/primeri/workflow-office-desktop.webp",
       "width": 1200,
-      "height": 536,
-      "sha256": "c444e0bf000ef3dba6f93049db3ca572941c5c121ae8a4e77513c6e72596bc4b"
+      "height": 617,
+      "sha256": "8b28c28951173c5b8c7c7f0567f3294de2abda86e3d30f35104cde8f1ce51df3"
     },
     "office-mobile": {
       "src": "/primeri/workflow-office-mobile.webp",
       "width": 780,
-      "height": 1012,
-      "sha256": "a2686914cc19311d6b642a5d9aad0376d627f07f8969c048921db447ac8c76ee"
+      "height": 191,
+      "sha256": "11f217927b9ce2cc2c461084174615797ac7fc86970f2117c968041f9ca0e659"
     }
   },
   "example": [

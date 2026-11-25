@@ -16,3 +16,5 @@ export default function SignUpPage(props: PageProps<"/sign-up">) {
     </AuthBoundary>
   );
 }
+
+export const metadata = { title: "Registracija" };

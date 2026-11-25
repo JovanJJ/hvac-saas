@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { refreshSession } from "@/lib/supabase/session";
 
 // Refresh only. Authentication and membership checks live in the DAL and actions.
-export function proxy(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   if (request.nextUrl.pathname.startsWith("/r/")) {
     const response = NextResponse.next();
     response.headers.set("Cache-Control", "private, no-store");
@@ -11,7 +11,9 @@ export function proxy(request: NextRequest) {
     response.headers.set("X-Content-Type-Options", "nosniff");
     return response;
   }
-  return refreshSession(request);
+  const response = await refreshSession(request);
+  if (request.nextUrl.pathname !== "/") response.headers.set("X-Robots-Tag", "noindex, nofollow, noarchive");
+  return response;
 }
 
 export const config = {

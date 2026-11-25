@@ -26,3 +26,5 @@ export default function Page(props: {
     </Suspense>
   );
 }
+
+export const metadata = { title: "Revizija izveštaja" };

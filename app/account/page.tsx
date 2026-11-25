@@ -74,3 +74,5 @@ export default function AccountPage(props: PageProps<"/account">) {
     </AuthShell>
   );
 }
+
+export const metadata = { title: "Moj nalog" };

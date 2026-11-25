@@ -7,3 +7,5 @@ export default function Page() {
     </StaffPage>
   );
 }
+
+export const metadata = { title: "Klijenti" };

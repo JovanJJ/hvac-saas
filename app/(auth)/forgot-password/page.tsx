@@ -11,3 +11,5 @@ export default function ForgotPasswordPage(props: PageProps<"/forgot-password">)
     </AuthBoundary>
   );
 }
+
+export const metadata = { title: "Oporavak lozinke" };

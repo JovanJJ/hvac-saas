@@ -14,3 +14,5 @@ export default function WorkspaceSettingsPage() {
     </StaffPage>
   );
 }
+
+export const metadata = { title: "Podaci firme" };

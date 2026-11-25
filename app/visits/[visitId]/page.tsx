@@ -6,3 +6,5 @@ export default function Page({
 }) {
   return <VisitRoute params={params} />;
 }
+
+export const metadata = { title: "Servisna poseta" };

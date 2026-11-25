@@ -6,3 +6,5 @@ export default function Page({
 }) {
   return <VisitRoute params={params} view="preview" />;
 }
+
+export const metadata = { title: "Pregled za klijenta" };

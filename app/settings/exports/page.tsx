@@ -39,3 +39,5 @@ async function Content({ searchParams }: { searchParams: Promise<Record<string, 
 export default function Page(props: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   return <StaffPage path="/settings/exports" roles={["owner"]}>{() => <Content {...props} />}</StaffPage>;
 }
+
+export const metadata = { title: "Izvoz podataka" };

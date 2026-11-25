@@ -162,7 +162,7 @@ export async function RevisionPage({ id }: { id: string }) {
       </div>
       <div id="revision-content" className="office-document">
         <div className="preview-note office-controls"><h2>Sadržaj zaključane revizije</h2><p>Ovaj pregled koristi sačuvane podatke. Za preuzimanje originalnog dokumenta koristite Preuzmi PDF.</p></div>
-        <ReportDocument report={revision.data} />
+        <ReportDocument report={revision.data} scrollableSummary />
       </div>
     </>
   );

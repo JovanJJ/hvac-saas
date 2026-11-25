@@ -1,3 +1,4 @@
+import { publicMetadata } from "@/features/public-site/metadata";
 import { randomUUID } from "node:crypto";
 import { Suspense } from "react";
 import { connection } from "next/server";
@@ -12,7 +13,7 @@ async function RequestForm({ searchParams }: PageProps<"/demo">) {
   return <DemoForm operationId={randomUUID()} plan={plan} />;
 }
 
-export const metadata = { title: "Dogovorite demonstraciju | teren." };
+export const metadata = publicMetadata("Dogovorite demonstraciju", "Pogledajte kako teren. povezuje raspored, nalaze tehničara i servisni izveštaj za klijenta u demonstraciji od 15 minuta.", "/demo");
 
 export default function Demo(props: PageProps<"/demo">) {
   return (

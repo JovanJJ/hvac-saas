@@ -9,3 +9,5 @@ async function Content({ params }: { params: Promise<{ visitId: string }> }) {
 export default function Page(props: { params: Promise<{ visitId: string }> }) {
   return <Suspense fallback={<AuthLoading />}><Content {...props} /></Suspense>;
 }
+
+export const metadata = { title: "Provera naplate" };

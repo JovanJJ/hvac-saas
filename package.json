@@ -8,6 +8,7 @@
     "test:demo-db": "node scripts/test-demo-requests.mjs",
     "sample:workflow": "CAPTURE_PUBLIC_WORKFLOW=true playwright test tests/capture-public-workflow.spec.ts --project=desktop --workers=1",
     "sample:report": "tsx scripts/generate-public-report.ts",
+    "sample:social": "node scripts/generate-social-preview.mjs",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",

@@ -1,0 +1,6 @@
+.report-summary-scroll { overflow-x: auto; margin-block: 1rem; border: 1px solid #dce4df; border-radius: .5rem; }
+.report-summary-scroll table { min-width: 36rem; margin: 0; font-size: .9rem; }
+.report-summary-scroll caption { padding: .75rem; }
+.report-summary-scroll th { background: #e6f0eb; }
+.report-summary-scroll:focus-visible { outline: 3px solid #08665f; outline-offset: 3px; }
+@media print { .report-summary-scroll { overflow: visible; border: 0; } .report-summary-scroll table { min-width: 0; } }

@@ -20,3 +20,5 @@ export default function Page(props: { params: Promise<{ actionId: string }> }) {
     </Suspense>
   );
 }
+
+export const metadata = { title: "Radnja iz nalaza" };

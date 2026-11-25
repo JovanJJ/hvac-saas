@@ -25,3 +25,5 @@ export default function OfficePage() {
     </StaffPage>
   );
 }
+
+export const metadata = { title: "Kancelarija" };

@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+<rect width="1200" height="630" fill="#e6f0eb"/><rect x="32" y="32" width="1136" height="566" rx="24" fill="#fff" stroke="#cbd9d3"/>
+<g font-family="DejaVu Sans, sans-serif" fill="#153238"><text x="82" y="122" font-size="56" font-weight="700">teren.</text>
+<text x="82" y="246" font-size="52" font-weight="700">Servisni nalog na telefonu.</text>
+<text x="82" y="316" font-size="52" font-weight="700">PDF izveštaj za klijenta.</text>
+<text x="82" y="390" font-size="26" fill="#475f63">Od zakazane posete do poslatog izveštaja.</text>
+<rect x="82" y="454" width="1036" height="80" rx="12" fill="#e6f0eb"/>
+<text x="112" y="505" font-size="25" fill="#08665f">Raspored  ·  Nalazi sa terena  ·  Izveštaj za klijenta</text></g></svg>

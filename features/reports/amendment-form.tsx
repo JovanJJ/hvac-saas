@@ -131,7 +131,7 @@ export function AmendmentForm({
       ) : (
         <>
           <h2>Pregled nove revizije</h2>
-          <ReportDocument report={previewReport!} draft />
+          <ReportDocument report={previewReport!} draft scrollableSummary />
           <form action={action} onReset={(e) => e.preventDefault()}>
             <input
               type="hidden"

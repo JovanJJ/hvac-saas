@@ -1,5 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 import { createReportFixture } from "./report-fixture";
+import { workerClient } from "../src/worker/client";
+import { claimJob, processJob } from "../src/worker/runner";
 
 async function login(page: Page, email = "technician.a@hvac.example.invalid") {
   await page.goto("/sign-in");
@@ -9,9 +11,11 @@ async function login(page: Page, email = "technician.a@hvac.example.invalid") {
   await expect(page).toHaveURL(/\/(today|office)$/);
 }
 
-test("RN-2026-0142 offline journey links pending/owner corrections and confirms 4/3/2 once", async ({ page, context, browser }, info) => {
+test("RN-2026-0142 offline journey keeps 4/3/2 through office PDF and explicit guest receipt", async ({ page, context, browser }, info) => {
   test.setTimeout(120000);
   const fixture = await createReportFixture({ submitted: false });
+  let worker: Awaited<ReturnType<typeof workerClient>> | undefined;
+  let guest: Page | undefined;
   const officeContext = await browser.newContext({ baseURL: info.project.use.baseURL, viewport: info.project.use.viewport });
   try {
     await fixture.db.query("update public.visit_items set outcome='pending' where id=any($1::uuid[])", [[fixture.itemIds[0],fixture.itemIds[1],fixture.itemIds[3]]]);
@@ -77,5 +81,39 @@ test("RN-2026-0142 offline journey links pending/owner corrections and confirms 
     await login(office, "owner.a@hvac.example.invalid");
     await office.goto(`/visits/${fixture.visitId}/review`);
     await expect(office.locator('dl[aria-label="Pregled rezultata"] dd')).toHaveText(["4","3","2"]);
-  } finally { await officeContext.close(); await context.setOffline(false); await fixture.dispose(); }
+    await office.getByRole("button", { name: "Izdaj izveštaj", exact: true }).click();
+    await expect(office).toHaveURL(/\/office\/reports\/[a-f0-9-]+$/);
+    const revisionId = new URL(office.url()).pathname.split("/").at(-1)!;
+    worker = await workerClient();
+    const job = await claimJob(worker, revisionId);
+    expect(job).not.toBeNull();
+    await processJob(worker, job!);
+    await expect(office.getByRole("link", { name: "Preuzmi PDF", exact: true })).toBeVisible({ timeout: 15000 });
+    await office.getByRole("button", { name: "Napravi link za klijenta", exact: true }).click();
+    const recipientUrl = await office.getByLabel("Link za kopiranje", { exact: true }).inputValue();
+    guest = await browser.newPage({ baseURL: info.project.use.baseURL, viewport: info.project.use.viewport });
+    await guest.goto(recipientUrl);
+    await expect(guest.getByRole("article").getByRole("definition")).toHaveText(["4", "3", "2"]);
+    await expect(guest.getByRole("navigation")).toHaveCount(0);
+    const downloaded = await guest.request.get((await guest.getByRole("link", { name: "Preuzmi PDF", exact: true }).getAttribute("href"))!);
+    expect(downloaded.status()).toBe(200);
+    expect(downloaded.headers()["cache-control"]).toContain("no-store");
+    const receiptCount = async () => (await fixture.db.query("select count(*)::int n from hvac_private.report_receipts where revision_id=$1", [revisionId])).rows[0].n;
+    expect(await receiptCount()).toBe(0);
+    const receipt = guest.getByRole("region", { name: "Potvrda prijema", exact: true });
+    await receipt.getByLabel("Ime i prezime", { exact: true }).fill("Fiktivni primalac UX14");
+    await receipt.getByLabel("Uloga kod klijenta", { exact: true }).fill("Upravnik");
+    await receipt.getByRole("checkbox").check();
+    await receipt.getByRole("button", { name: "Potvrdi prijem izveštaja", exact: true }).click();
+    await expect(receipt.getByRole("status")).toContainText("Prijem je potvrđen.");
+    expect(await receiptCount()).toBe(1);
+    await office.getByRole("button", { name: "Osveži potvrde", exact: true }).click();
+    await expect(office.getByRole("region", { name: "Evidencija prijema" })).toContainText("Fiktivni primalac UX14");
+    const records = (await fixture.db.query("select (select count(*)::int from public.report_revisions where visit_id=$1) revisions,(select count(*)::int from public.follow_ups f join public.visit_items i on i.id=f.item_id where i.visit_id=$1 and f.state='open') actions", [fixture.visitId])).rows[0];
+    expect(records).toEqual({ revisions: 1, actions: 2 });
+  } finally {
+    await guest?.close();
+    if (worker) { worker.auth.stopAutoRefresh(); await worker.auth.signOut({ scope: "local" }); }
+    await officeContext.close(); await context.setOffline(false); await fixture.dispose();
+  }
 });

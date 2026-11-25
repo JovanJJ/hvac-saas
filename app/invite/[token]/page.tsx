@@ -69,3 +69,5 @@ export default function InvitationPage(props: PageProps<"/invite/[token]">) {
     </AuthBoundary>
   );
 }
+
+export const metadata = { title: "Poziv u tim" };

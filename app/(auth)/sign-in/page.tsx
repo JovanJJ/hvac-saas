@@ -29,3 +29,5 @@ export default function SignInPage(props: PageProps<"/sign-in">) {
     </AuthBoundary>
   );
 }
+
+export const metadata = { title: "Prijava" };

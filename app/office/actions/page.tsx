@@ -9,3 +9,5 @@ export default function Page({ searchParams }: {
     </StaffPage>
   );
 }
+
+export const metadata = { title: "Sledeće radnje" };
