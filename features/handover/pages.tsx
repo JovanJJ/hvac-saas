@@ -1,3 +1,7 @@
+import { OfficeEmpty, OfficeFacts } from "@/components/ui/office-work";
+import { StaffPageHeading } from "@/components/ui/staff-page-heading";
+import { OverviewError } from "@/features/office/overview-state";
+import { requireWorkspace } from "@/features/workspaces/dal";
 import Link from "next/link";
 import { randomUUID } from "node:crypto";
 import { SelectField } from "@/components/ui/select-field";
@@ -9,7 +13,7 @@ import { BillingForm } from "./form";
 import { billingLabels, receiptLabels, readFilters, handoverLink, type BillingValue, type HandoverRow, type SearchParams } from "./model";
 function BillingState({ value }: { value: BillingValue }) {
   return <>
-    <p>Oznaka: {value.stale ? billingLabels.recheck : value.ready ? billingLabels.ready : "Nije označeno kao spremno"}</p>
+    <p className="office-state">Oznaka: {value.stale ? billingLabels.recheck : value.ready ? billingLabels.ready : "Nije označeno kao spremno"}</p>
     {value.stale && <p>Podaci posete su promenjeni nakon označavanja. Potrebna je ponovna provera.</p>}
     {value.actor && <p>Poslednja promena: {value.actor}</p>}
     {value.note && <p>Interna beleška: {value.note}</p>}
@@ -21,7 +25,7 @@ function HandoverCard({ row, receipts }: { row: HandoverRow; receipts: boolean }
     <p>{new Date(row.at).toLocaleString("sr-Latn-RS", { timeZone: row.timeZone })} · {row.timeZone}</p>
     {receipts ? <>
       <p>{row.number} · Revizija {row.revision} · {row.latest ? "Najnovija revizija" : "Prethodna revizija"}</p>
-      <p>{row.receiptCount ? "Prijem potvrđen" : "Bez potvrde prijema"} · Broj potvrda: {row.receiptCount}</p>
+      <p className="office-state">{row.receiptCount ? "Prijem potvrđen" : "Bez potvrde prijema"} · Broj potvrda: {row.receiptCount}</p>
       <p>{row.renderState && renderLabels[row.renderState]} · Aktivni linkovi: {row.activeLinks}</p>
       <Link href={`/office/reports/${row.revisionId}`}>Otvori izveštaj i potvrde</Link>
     </> : <>
@@ -34,11 +38,14 @@ function HandoverCard({ row, receipts }: { row: HandoverRow; receipts: boolean }
 }
 export async function HandoverQueues({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const { filters, invalid } = readFilters(await searchParams);
-  const data = await handoverQueue(filters);
+  await requireWorkspace(["owner", "coordinator"]);
+  let data: Awaited<ReturnType<typeof handoverQueue>>;
+  try { data = await handoverQueue(filters); }
+  catch { return <><StaffPageHeading title="Potvrde i naplata" description="Potvrde prijema i interna provera naplate vode se odvojeno." /><OverviewError label="Potvrde i naplata" /></>; }
   const receipts = filters.queue === "receipts";
   const states = receipts ? receiptLabels : billingLabels;
   return <>
-    <h1>Potvrde i naplata</h1>
+    <StaffPageHeading title="Potvrde i naplata" description="Potvrda prijema pripada reviziji izveštaja. Spremnost za proveru naplate pripada poseti." />
     <nav aria-label="Pregledi primopredaje" className="my-5 flex flex-wrap gap-3">
       <Link className={`button ${receipts ? "primary" : "secondary"}`} href={handoverLink(filters, { queue: "receipts", state: "missing", page: 1 })} aria-current={receipts ? "page" : undefined}>Potvrde prijema</Link>
       <Link className={`button ${receipts ? "secondary" : "primary"}`} href={handoverLink(filters, { queue: "billing", state: "pending", page: 1 })} aria-current={!receipts ? "page" : undefined}>Provera naplate</Link>
@@ -61,7 +68,7 @@ export async function HandoverQueues({ searchParams }: { searchParams: Promise<S
       <Link className="button secondary" href={handoverLink(filters, { state: receipts ? "missing" : "pending", site: "", customer: "", from: "", until: "", revision: "all", page: 1 })}>Poništi filtere</Link>
     </form>
     <p>Ukupno: {data.total} · Stranica {data.page}</p>
-    {!data.rows.length && <p>Nema stavki za izabrane filtere.</p>}
+    {!data.rows.length && <OfficeEmpty href={handoverLink(filters, { state: "all", site: "", customer: "", from: "", until: "", revision: "all", page: 1 })} label="Prikaži sve stavke">Nema stavki za izabrane filtere.</OfficeEmpty>}
     {data.rows.map(row => <HandoverCard key={row.id} row={row} receipts={receipts} />)}
     <nav aria-label="Stranice primopredaje" className="my-5 flex flex-wrap gap-3">
       {data.page > 1 && <Link href={handoverLink(filters, { page: data.page - 1 })}>Prethodna stranica</Link>}
@@ -74,8 +81,8 @@ export async function BillingDetailPage({ id }: { id: string }) {
   const eligible = ["submitted", "issued"].includes(detail.status);
   return <div className="min-w-0 break-words">
     <Link href="/office/handover?queue=billing">Nazad na proveru naplate</Link>
-    <h1>Provera naplate · {detail.site}</h1>
-    <p>{detail.customer} · {visitStatusLabels[detail.status]}</p>
+    <StaffPageHeading title={`Provera naplate · ${detail.site}`} description="Interna priprema za naplatu; potvrde prijema i radnje proveravaju se zasebno." />
+    <OfficeFacts items={[{ label: "Klijent", value: detail.customer }, { label: "Stanje posete", value: visitStatusLabels[detail.status] }]} />
     <p>Ova oznaka ne izdaje fakturu i ne zatvara radnje. Potvrda prijema vodi se zasebno.</p>
     <section className="card my-5"><h2>Trenutno stanje pripreme</h2><BillingState value={detail.billing} />
       {detail.billing.updatedAt && <p>{new Date(detail.billing.updatedAt).toLocaleString("sr-Latn-RS", { timeZone: detail.timeZone })} · {detail.timeZone}</p>}

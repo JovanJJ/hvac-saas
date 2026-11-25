@@ -9,7 +9,7 @@ nextEnv.loadEnvConfig(process.cwd(),false,{info(){},error(){}});
 const upstream = process.env.SUPABASE_INTERNAL_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
 assert(upstream, "Supabase API configuration is required");
 let fail = false;
-const blocked = new Set(["/rest/v1/rpc/schedule_snapshot", "/rest/v1/rpc/visit_review_queue", "/rest/v1/rpc/report_list"]);
+const blocked = new Set(["/rest/v1/rpc/schedule_snapshot", "/rest/v1/rpc/visit_review_queue", "/rest/v1/rpc/report_list", "/rest/v1/rpc/office_work_queue", "/rest/v1/rpc/handover_queue", "/rest/v1/rpc/maintenance_list", "/rest/v1/rpc/report_links", "/rest/v1/rpc/report_receipts"]);
 const proxy = createServer(async (req,res) => {
   try {
     if (req.url === "/__test/fail" || req.url === "/__test/recover") {
@@ -47,7 +47,8 @@ try {
     await new Promise(resolve=>setTimeout(resolve,200));
   }
   assert(ready,"Temporary production server did not become ready");
-  const child=spawn("npx",["playwright","test","tests/staff-overview.spec.ts","tests/staff-overview-errors.spec.ts","--workers=1","--output=/tmp/hvac-staff-ui-results"],{
+  const suites=process.argv.slice(2);
+  const child=spawn("npx",["playwright","test",...(suites.length ? suites : ["tests/staff-overview.spec.ts","tests/staff-overview-errors.spec.ts"]),"--workers=1","--output=/tmp/hvac-staff-ui-results"],{
     env:{...process.env,PLAYWRIGHT_BASE_URL:origin,TEST_STAFF_FAILURE_PROXY_URL:proxyUrl},stdio:"inherit",
   });
   assert.equal(await new Promise(resolve=>child.on("exit",resolve)),0);

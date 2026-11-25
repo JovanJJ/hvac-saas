@@ -10,7 +10,7 @@ const headers = {
   "X-Content-Type-Options": "nosniff",
 };
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: RouteContext<"/api/office/reports/[revisionId]/pdf">,
 ) {
   if (!(await currentUser()))
@@ -33,12 +33,13 @@ export async function GET(
   const bytes = await archivedPdf(client, report.artifact);
   if (!bytes) return new Response(null, { status: 503, headers });
   const filename = pdfFilename(report.data.reference, report.revision);
+  const disposition = new URL(request.url).searchParams.get("view") === "preview" ? "inline" : "attachment";
   return new Response(bytes, {
     headers: {
       ...headers,
       "Content-Type": "application/pdf",
       "Content-Length": String(bytes.byteLength),
-      "Content-Disposition": `attachment; filename="${filename}"`,
+      "Content-Disposition": `${disposition}; filename="${filename}"`,
     },
   });
 }

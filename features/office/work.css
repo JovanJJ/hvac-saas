@@ -1,0 +1,18 @@
+.office-controls { font-size: 1rem; color: #153238; }
+.office-section { min-width: 0; margin-block: 2rem; scroll-margin-top: 1rem; }
+.office-section > header { margin-bottom: 1rem; }
+.office-section h2 { overflow-wrap: anywhere; }
+.office-help { color: #475f63; max-width: 70ch; }
+.office-facts { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,14rem),1fr)); gap: 1rem; margin: 1rem 0; }
+.office-facts > div { min-width: 0; }
+.office-facts dt { color: #475f63; font-size: .85rem; font-weight: 600; }
+.office-facts dd { margin: .25rem 0 0; overflow-wrap: anywhere; }
+.office-navigation { display: flex; flex-wrap: wrap; gap: .75rem 1.5rem; margin-block: 1.5rem; padding-block: 1rem; border-block: 1px solid #dce4df; }
+.office-navigation a { text-decoration: underline; text-underline-offset: .2em; }
+.office-empty { border: 1px dashed #a8c4bd; border-radius: .75rem; padding: 1.25rem; margin-block: 1rem; }
+.office-system { border: 1px solid #dce4df; border-radius: .75rem; padding: 1rem; margin-block: 1.5rem; min-width: 0; overflow-wrap: anywhere; scroll-margin-top: 1rem; }
+.office-state { padding: 1rem; border-left: 4px solid #08665f; background: #e6f0eb; border-radius: .5rem; margin-block: 1rem; overflow-wrap: anywhere; }
+.office-section :focus-visible, .office-navigation :focus-visible, .office-system:focus { outline: 3px solid #08665f; outline-offset: 3px; }
+.office-document { min-width: 0; }
+.office-document > .report { margin-inline: auto; }
+@media print { .office-navigation { display: none; } }

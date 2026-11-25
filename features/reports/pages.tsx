@@ -1,3 +1,4 @@
+import { OfficeSection, OfficeFacts, OfficeNavigation } from "@/components/ui/office-work";
 import { AmendmentForm } from "./amendment-form";
 import type { AmendmentBundle } from "./amendment-model";
 import { ReceiptRefresh } from "./receipt-refresh";
@@ -55,14 +56,13 @@ export async function RevisionPage({ id }: { id: string }) {
     p_organization_id: context.workspace.organization.id,
     p_revision_id: id,
   });
-  if (result.error) throw new Error("Linkovi trenutno nisu dostupni.");
+
   const links = result.data as ReportLink[];
   const receiptResult = await client.rpc("report_receipts", {
     p_organization_id: context.workspace.organization.id,
     p_revision_id: id,
   });
-  if (receiptResult.error)
-    throw new Error("Potvrde prijema trenutno nisu dostupne.");
+
   const receipts = receiptResult.data as ReportReceipt[];
   const amendment =
     revision.latestRevisionId === id
@@ -74,12 +74,24 @@ export async function RevisionPage({ id }: { id: string }) {
 
   return (
     <>
-      <div className="preview-note">
+      <div className="preview-note office-controls">
         <h1>
           {revision.data.reference} · Revizija {revision.revision}
         </h1>
         <p>Izveštaj je izdat. Podaci ove revizije su zaključani.</p>
-        <ReportRenderStatus revision={revision} operationId={randomUUID()} />
+        <OfficeNavigation items={[
+          { label: "PDF i deljenje", href: "#revision-delivery" },
+          { label: "Potvrde prijema", href: "#revision-receipts" },
+          { label: "Sadržaj revizije", href: "#revision-content" },
+          { label: "Radnje iz nalaza", href: "/office/actions" },
+          { label: "Provera naplate", href: `/office/handover/${revision.visitId}` },
+        ]} />
+        <OfficeFacts items={[
+          { label: "Lokacija", value: revision.data.site },
+          { label: "Klijent", value: revision.data.customer },
+          { label: "Revizija", value: `${revision.revision} · ${revision.latestRevisionId === id ? "Najnovija" : "Prethodna"}` },
+        ]} />
+
         <p>
           Izdato:{" "}
           {new Date(revision.issuedAt).toLocaleString(revision.data.locale, {
@@ -128,11 +140,18 @@ export async function RevisionPage({ id }: { id: string }) {
           ostane, proverite povezivanje sistema prethodne revizije.
         </p>
       )}
-      <section className="card my-5" aria-label="Evidencija prijema">
+      <div className="preview-note office-controls">
+      <OfficeSection id="revision-delivery" title="PDF i deljenje" description="Revizija je sačuvana. Link za klijenta postaje dostupan tek kada je arhivirani PDF spreman.">
+        <ReportRenderStatus revision={revision} operationId={randomUUID()} />
+        {revision.renderState !== "ready" && <p className="office-state">Deljenje još nije dostupno. Priprema PDF-a ne stvara novu reviziju.</p>}
+        {revision.renderState === "ready" && revision.artifact && (result.error ? <OverviewError label="Linkovi za klijenta" /> : <SharePanel revisionId={id} links={links} token={randomBytes(32).toString("base64url")} operationId={randomUUID()} timeZone={revision.data.timeZone} />)}
+      </OfficeSection>
+      <section id="revision-receipts" className="card my-5" aria-label="Evidencija prijema">
         <h2>Prijem izveštaja · Revizija {revision.revision}</h2>
+        <p>Potvrda beleži prijem ove revizije, bez odobrenja ponude ili naplate. Nova ispravka ima zasebne potvrde.</p>
         <ReceiptRefresh />
-        {!receipts.length && <p>Nema potvrde prijema.</p>}
-        {receipts.map((receipt) => (
+        {receiptResult.error ? <OverviewError label="Potvrde prijema" /> : !receipts.length && <p>Nema potvrde prijema.</p>}
+        {!receiptResult.error && receipts.map((receipt) => (
           <ReceiptDetails
             key={receipt.id}
             receipt={receipt}
@@ -140,16 +159,11 @@ export async function RevisionPage({ id }: { id: string }) {
           />
         ))}
       </section>
-      {revision.renderState === "ready" && revision.artifact && (
-        <SharePanel
-          revisionId={id}
-          links={links}
-          token={randomBytes(32).toString("base64url")}
-          operationId={randomUUID()}
-          timeZone={revision.data.timeZone}
-        />
-      )}
-      <ReportDocument report={revision.data} />
+      </div>
+      <div id="revision-content" className="office-document">
+        <div className="preview-note office-controls"><h2>Sadržaj zaključane revizije</h2><p>Ovaj pregled koristi sačuvane podatke. Za preuzimanje originalnog dokumenta koristite Preuzmi PDF.</p></div>
+        <ReportDocument report={revision.data} />
+      </div>
     </>
   );
 }

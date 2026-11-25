@@ -1,3 +1,4 @@
+import { OfficeFacts, OfficeNavigation } from "@/components/ui/office-work";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { randomUUID } from "node:crypto";
@@ -24,6 +25,10 @@ export async function FollowUpDetail({ actionId }: { actionId: string }) {
       <p>
         {task.customer} · {task.site} · {task.room}
       </p>
+      <OfficeNavigation items={[
+        { label: "Izvorni sistem i fotografije", href: `/visits/${task.visitId}/review#system-${task.itemId}` },
+        { label: "Sve radnje", href: "/office/actions" },
+      ]} />
       <section className="card my-5">
         <h2>Izvorni nalaz</h2>
         <p>{task.finding || task.noAccessReason || task.work}</p>
@@ -34,10 +39,12 @@ export async function FollowUpDetail({ actionId }: { actionId: string }) {
           Otvori izvorni sistem
         </Link>
       </section>
-      <p>
-        Stanje: {task.state === "open" ? "Otvoreno" : "Završeno"} · Odgovoran:{" "}
-        {task.owner || "Nedostaje"} · Rok radnje: {task.dueDate}
-      </p>
+      <OfficeFacts items={[
+        { label: "Stanje radnje", value: task.state === "open" ? "Otvoreno" : "Završeno" },
+        { label: "Odgovoran", value: task.owner || "Nedostaje" },
+        { label: "Rok radnje", value: task.dueDate || "Nedostaje" },
+      ]} />
+      <p className="office-state">Rok radnje i termin povratne posete nisu isti podatak. Zakazivanje samo po sebi ne završava radnju.</p>
       {task.returnVisitId && (
         <section className="card my-5">
           <h2>Zakazana povratna poseta</h2>

@@ -204,7 +204,7 @@ test("four systems persist from Today through office handover and customer previ
         exact: true,
       })
       .click();
-    const totals = office.getByRole("definition");
+    const totals = office.getByLabel("Pregled rezultata", { exact: true }).getByRole("definition");
     await expect(totals).toHaveText(["4", "3", "2"]);
     await office
       .getByRole("link", { name: "Pregled za klijenta", exact: true })

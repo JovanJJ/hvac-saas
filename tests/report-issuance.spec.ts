@@ -8,6 +8,7 @@ test("office issues one immutable four-system revision with a queued PDF at both
   browser,
 }, info) => {
   test.setTimeout(90_000);
+  page.setDefaultTimeout(10000);
   const fixture = await createReportFixture();
   const techContext = await browser.newContext({
     viewport: info.project.use.viewport,
@@ -55,7 +56,7 @@ test("office issues one immutable four-system revision with a queued PDF at both
       .getByRole("button", { name: "Izdaj izveštaj", exact: true })
       .click();
     await expect(
-      page.getByRole("alert").filter({ hasText: "fotografije koje čekaju" }),
+      page.getByRole("form", { name: "Izdavanje izveštaja" }).getByRole("alert").filter({ hasText: "fotografije koje čekaju" }),
     ).toBeVisible();
     expect(
       (

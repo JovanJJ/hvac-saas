@@ -8,7 +8,7 @@ export function BillingForm({ detail, operationId }: { detail: BillingDetail; op
   const [state, action, pending] = useActionState(billingAction, {});
   return (
     <form action={action} aria-label="Oznaka za proveru naplate" className="card my-5 space-y-4" onReset={event => event.preventDefault()}>
-      <h2>Oznaka za proveru naplate</h2>
+      <h2>Oznaka za proveru naplate</h2><p>Opišite šta ste proverili i šta još treba uraditi. Posle čuvanja oznaka ostaje interni zapis; fakturu pripremate kroz svoj proces naplate.</p>
       <input type="hidden" name="visitId" value={detail.visitId} />
       <input type="hidden" name="version" value={base.version} />
       <input type="hidden" name="visitVersion" value={base.visitVersion} />

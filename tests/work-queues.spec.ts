@@ -76,7 +76,7 @@ test("office finds overdue quotes and access-dependent returns, books once and n
         const returnId = repeats[0].data;
         await page.goto(`/office/actions?site=${fixture.siteId}&due=today&booking=booked&dependency=required&owner=${techId}`);
         await expect(page.getByRole("article")).toHaveCount(1);
-        await expect(page.getByRole("article")).toContainText(`Rok radnje: ${today}`);
+        await expect(page.getByRole("article").getByRole("definition")).toHaveText(["technician.a@hvac.example.invalid", today]);
         await expect(page.getByRole("article")).toContainText("Stanje: Otvoreno");
         await expect(page.getByRole("link", { name: "Raspored povratne posete" })).toHaveAttribute("href", `/schedule/${returnId}`);
         await page.getByRole("link", { name: "Otvori izvorni nalaz" }).click();

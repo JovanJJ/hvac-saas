@@ -395,7 +395,7 @@ export function TransitionForm({
       <input type="hidden" name="version" value={visit.version} />
       <input type="hidden" name="operationId" value={operationId} />
       <input type="hidden" name="kind" value={kind} />
-      {kind === "return" && <Note label="Razlog dopune" name="reason" />}
+      {kind === "return" && <><h2>Dopuna terenskog unosa</h2><p>Navedite oznaku sistema i konkretnu dopunu. Razlog će biti prikazan tehničaru, koji ponovo predaje posetu posle ispravke.</p><Note label="Razlog dopune" name="reason" /></>}
       {kind === "add" && (
         <SelectField label="Postojeći sistem na lokaciji" name="systemId">
           {visit.availableSystems.map((s) => (

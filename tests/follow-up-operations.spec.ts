@@ -102,7 +102,7 @@ test("office completes quote preparation and books one source-linked return with
       .fill(process.env.SEED_PASSWORD!);
     await page.getByRole("button", { name: "Prijavi se", exact: true }).click();
     await expect(page).toHaveURL(/\/office$/);
-    await page
+    await page.getByRole("main")
       .getByRole("link", { name: "Sledeće radnje", exact: true })
       .click();
     await expect(page.getByRole("heading", { level: 1 })).toHaveText(
@@ -122,11 +122,9 @@ test("office completes quote preparation and books one source-linked return with
     await page
       .getByRole("button", { name: "Sačuvaj odgovornost i rok" })
       .click();
-    await expect(
-      page.getByText(
-        /Stanje: Otvoreno · Odgovoran: owner.a@hvac.example.invalid · Rok radnje: 2026-12-12/,
-      ),
-    ).toBeVisible();
+    await expect(page.getByRole("definition")).toHaveText([
+      "Otvoreno", "owner.a@hvac.example.invalid", "2026-12-12",
+    ]);
     const completeForm = page
       .locator("form")
       .filter({

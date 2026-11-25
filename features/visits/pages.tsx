@@ -1,3 +1,4 @@
+import { OfficeSection, OfficeFacts, OfficeNavigation } from "@/components/ui/office-work";
 import { FieldSummary } from "@/features/field/presentation";
 import { requireWorkspace } from "@/features/workspaces/dal";
 import { OverviewError } from "@/features/office/overview-state";
@@ -101,7 +102,24 @@ export async function VisitWorkspace({
           )}
         </section>
       )}
+      {office && <>
+        <OfficeNavigation items={[
+          { label: "Nalazi i fotografije", href: "#review-findings" },
+          { label: "Odluka kancelarije", href: "#review-decision" },
+          { label: "Sadržaj za klijenta", href: `/visits/${id}/preview` },
+        ]} />
+        <div className="office-state"><strong>{visit.status === "submitted" ? "Poseta čeka odluku kancelarije." : visit.status === "issued" ? "Izveštaj je izdat; dalje radnje pratite zasebno." : "Terenski unos još nije predat za izdavanje."}</strong><p>Proverite ishode, fotografije i odgovorne članove sa rokovima. Dopuna vraća unos tehničaru; izdavanje zaključava reviziju.</p></div>
+      </>}
       <Totals counts={totals(visit.items)} />
+      {office && <OfficeSection id="review-findings" title="Nalazi i fotografije" description="Fotografije su uz pripadajući sistem. Interne beleške i interne fotografije služe kancelariji; ne ulaze u izveštaj za klijenta.">
+        <nav aria-label="Sistemi za proveru" className="field-system-links">{visit.items.map(item => <a key={item.id} href={`#system-${item.id}`}>{item.code} · {item.room}</a>)}</nav>
+        <OfficeFacts items={[
+          { label: "Fotografije za klijenta · potvrđene", value: photos.filter(p => p.state === "verified" && p.visibility === "customer").length },
+          { label: "Fotografije koje čekaju slanje", value: pendingPhotos },
+          { label: "Otvorene radnje", value: totals(visit.items).actions },
+        ]} />
+        {!!issues.length && <p role="alert">{issues.join(" ")}</p>}
+      </OfficeSection>}
       {!office && editable ? (
         <DraftBoundary
           userId={context.user.id}
@@ -155,7 +173,7 @@ export async function VisitWorkspace({
       ) : (
         <>
           {visit.items.map((item) => (
-            <div key={item.id} id={`system-${item.id}`}>
+            <div key={item.id} id={`system-${item.id}`} tabIndex={-1} className={office ? "office-system" : undefined}>
               <Result item={item} />
               {item.correctedAt && (
                 <p className="my-3">
@@ -216,27 +234,18 @@ export async function VisitWorkspace({
               Pregled za klijenta
             </Link>
           )}
-          {office && visit.status === "submitted" && (
-            <TransitionForm
-              key={`return:${visit.version}`}
-              visit={visit}
-              kind="return"
-              operationId={randomUUID()}
-            />
-          )}
           {office && editable && (
             <Link href={`/visits/${id}`}>Otvori unos</Link>
           )}
         </>
       )}
-      {office && visit.status === "submitted" && (
-        <IssueForm
-          key={`issue:${visit.version}`}
-          visitId={id}
-          version={visit.version}
-          operationId={randomUUID()}
-        />
-      )}
+      {office && <OfficeSection id="review-decision" title="Odluka kancelarije" description={visit.status === "submitted" ? "Za dopunu navedite sistem i šta tehničar treba da proveri. Pre izdavanja otvorite pregled sadržaja za klijenta." : "Izdavanje je dostupno tek nakon predaje tehničara. Izdate revizije ostaju zaključane."}>
+        {visit.status === "submitted" && <>
+          <Link className="button secondary" href={`/visits/${id}/preview`}>Proveri sadržaj izveštaja</Link>
+          <div id="review-return"><TransitionForm key={`return:${visit.version}`} visit={visit} kind="return" operationId={randomUUID()} /></div>
+          <IssueForm key={`issue:${visit.version}`} visitId={id} version={visit.version} operationId={randomUUID()} />
+        </>}
+      </OfficeSection>}
       {context.workspace.role !== "technician" && visit.status === "issued" && (
         <RevisionLink visitId={id} />
       )}

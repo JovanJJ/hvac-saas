@@ -1,3 +1,7 @@
+import { OfficeEmpty, OfficeFacts, OfficeNavigation } from "@/components/ui/office-work";
+import { StaffPageHeading } from "@/components/ui/staff-page-heading";
+import { OverviewError } from "@/features/office/overview-state";
+import { requireWorkspace } from "@/features/workspaces/dal";
 import Link from "next/link";
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
@@ -31,10 +35,13 @@ export async function PlansContent({
   const { state, page } = parsed.success
     ? parsed.data
     : { state: "all", page: 1 };
-  const data = await maintenanceList(state, page);
+  await requireWorkspace(["owner", "coordinator"]);
+  let data: Awaited<ReturnType<typeof maintenanceList>>;
+  try { data = await maintenanceList(state, page); }
+  catch { return <><StaffPageHeading title="Planovi održavanja" description="Pravila ponavljanja i priprema budućih poseta." /><OverviewError label="Planovi održavanja" /></>; }
   return (
     <>
-      <h1>Planovi održavanja</h1>
+      <StaffPageHeading title="Planovi održavanja" description="Plan određuje ponavljanje. Tek kreirana poseta ulazi u raspored i postaje dostupna dodeljenom tehničaru." />
       <p>
         Plan čuva pravilo ponavljanja, sisteme i tim. Aktivne planove obrađuje
         worker i priprema posete za narednih 90 dana.
@@ -45,17 +52,18 @@ export async function PlansContent({
       {!parsed.success && (
         <p role="status">Neispravni filteri su vraćeni na početni prikaz.</p>
       )}
-      <form method="get" className="card my-5 space-y-4">
+      <form key={state} method="get" aria-label="Filteri planova" className="card my-5 space-y-4">
         <label htmlFor="plan-state">Stanje plana</label>
         <select id="plan-state" name="state" defaultValue={state}>
           <option value="all">Svi planovi</option>
           <option value="active">Aktivni</option>
           <option value="paused">Pauzirani</option>
         </select>
-        <button className="button secondary">Prikaži planove</button>
+        <button className="button primary">Prikaži planove</button>
+        <Link className="button secondary" href="/maintenance">Poništi filtere</Link>
       </form>
       <p>Ukupno: {data.total}</p>
-      {!data.plans.length && <p>Nema planova za izabrani prikaz.</p>}
+      {!data.plans.length && <OfficeEmpty href="/maintenance/new" label="Novi plan održavanja">Nema planova za izabrani prikaz. Za promenu prikaza poništite filtere, ili dodajte plan za aktivnu lokaciju.</OfficeEmpty>}
       {data.plans.map((plan) => (
         <article
           className="card my-5 min-w-0 break-words space-y-3"
@@ -192,7 +200,18 @@ export async function PlanContent({
         operationId={randomUUID()}
       />
       <p>Izmena i pauziranje plana ne menjaju niti brišu postojeće posete.</p>
-      <PlanGeneration
+      <OfficeNavigation items={[
+        { label: "Priprema i kreirane posete", href: "#plan-generation" },
+        { label: "Podešavanja plana", href: "#plan-settings" },
+        { label: "Održavanje iz planova", href: `/office/actions?queue=maintenance&site=${detail.siteId}` },
+        { label: "Raspored", href: "/schedule?view=week" },
+      ]} />
+      <OfficeFacts items={[
+        { label: "Ponavljanje", value: `Na ${detail.intervalMonths} meseci` },
+        { label: "Vremenska zona", value: detail.timeZone },
+        { label: "Kreirane posete", value: generation.totalVisits },
+      ]} />
+      <div id="plan-generation" className="office-section"><PlanGeneration
         plan={detail}
         data={generation}
         operationId={randomUUID()}
@@ -201,6 +220,7 @@ export async function PlanContent({
           generation.jobs.map((job) => [job.id, randomUUID()]),
         )}
       />
+      </div>
       <details className="my-5">
         <summary>Termini sačuvanog plana</summary>
         <Occurrences
@@ -208,13 +228,13 @@ export async function PlanContent({
           title="Termini sačuvanog plana"
         />
       </details>
-      <PlanForm
+      <div id="plan-settings" className="office-section"><PlanForm
         key={detail.id}
         detail={detail}
         options={options}
         planId={detail.id}
         operationId={randomUUID()}
-      />
+      /></div>
       <section className="my-5">
         <h2>Istorija plana</h2>
         {detail.history.map((event) => (

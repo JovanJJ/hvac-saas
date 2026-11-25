@@ -21,12 +21,15 @@ export function ReportRenderStatus({
     return () => clearInterval(timer);
   }, [revision.renderState, router]);
   return (
-    <section className="my-4" aria-label="Izrada PDF-a">
+    <section className="office-state" aria-label="Izrada PDF-a">
+      <h3>Izrada i arhiva PDF-a</h3>
       <p role="status">{renderLabels[revision.renderState]}</p>
       {(revision.renderState === "queued" ||
         revision.renderState === "rendering") && (
-        <p>Pregled se automatski osvežava. Pokušaj: {revision.attempts}/3.</p>
+        <p>Pregled se automatski osvežava. Pokušaj: {revision.attempts}/3. Po završetku možete preuzeti PDF i napraviti link za klijenta.</p>
       )}
+      {revision.renderState === "ready" && revision.artifact && <p>Arhivirani PDF je spreman. Preuzimanje ne beleži potvrdu prijema.</p>}
+      {revision.renderState === "ready" && revision.artifact && <p><a className="button secondary" href={`/api/office/reports/${revision.id}/pdf?view=preview`} target="_blank" rel="noreferrer">Otvori PDF pregled (novi tab)</a></p>}
       {revision.renderState === "ready" && revision.artifact && (
         <a
           className="button primary"

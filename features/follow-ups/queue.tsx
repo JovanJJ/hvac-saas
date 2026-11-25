@@ -1,3 +1,7 @@
+import { OfficeEmpty, OfficeFacts } from "@/components/ui/office-work";
+import { StaffPageHeading } from "@/components/ui/staff-page-heading";
+import { OverviewError } from "@/features/office/overview-state";
+import { requireWorkspace } from "@/features/workspaces/dal";
 import Link from "next/link";
 import { SelectField } from "@/components/ui/select-field";
 import { workQueue } from "./dal";
@@ -32,11 +36,11 @@ function WorkCard({ row }: { row: QueueRow }) {
         </Link>
       </h2>
       <p>{row.customer} · {row.site}{row.room ? ` · ${row.room}` : ""}</p>
-      <p>Stanje: {queueStates[row.state]}{row.overdue ? " · U kašnjenju" : ""}</p>
-      <p>
-        {maintenance ? "Odgovoran tim" : "Odgovoran"}: {row.owner || "Nedostaje odgovoran"}
-        {" · "}{maintenance ? "Datum posete" : "Rok radnje"}: {row.dueDate || "Nedostaje"}
-      </p>
+      <p className="office-state">Stanje: {queueStates[row.state]}{row.overdue ? " · U kašnjenju" : ""}</p>
+      <OfficeFacts items={[
+        { label: maintenance ? "Odgovoran tim" : "Odgovoran", value: row.owner || "Nedostaje odgovoran" },
+        { label: maintenance ? "Datum posete" : "Rok radnje", value: row.dueDate || "Nedostaje" },
+      ]} />
       <p>{row.finding || row.noAccessReason || row.work}</p>
       {row.customerAction && (
         <p><strong>Potrebno od klijenta:</strong> {row.customerAction}</p>
@@ -82,7 +86,11 @@ export async function WorkQueues({ searchParams }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { filters, invalid } = readQueueFilters(await searchParams);
-  const { data, members } = await workQueue(filters);
+  await requireWorkspace(["owner", "coordinator"]);
+  let result: Awaited<ReturnType<typeof workQueue>>;
+  try { result = await workQueue(filters); }
+  catch { return <><StaffPageHeading title="Sledeće radnje" description="Radnje iz nalaza i održavanje iz planova." /><OverviewError label="Sledeće radnje" /></>; }
+  const { data, members } = result;
   const maintenance = filters.queue === "maintenance";
   const actionStates = ["pending", "all", "open", "completed", "quote", "repair", "revisit"];
   const states = Object.fromEntries(Object.entries(queueStates).filter(([key]) =>
@@ -92,7 +100,7 @@ export async function WorkQueues({ searchParams }: {
   ));
   return (
     <>
-      <h1>Sledeće radnje</h1>
+      <StaffPageHeading title="Sledeće radnje" description="Pratite ko preuzima sledeći korak i do kada. Pregled i izdavanje terenskog izveštaja ostaju u Kancelariji." />
       <nav aria-label="Pregledi obaveza" className="my-5 flex flex-wrap gap-3">
         <Link
           className={`button ${maintenance ? "secondary" : "primary"}`}
@@ -156,7 +164,7 @@ export async function WorkQueues({ searchParams }: {
         })}>Poništi filtere</Link>
       </form>
       <p>Ukupno: {data.total} · Stranica {data.page}</p>
-      {!data.rows.length && <p>Nema obaveza za izabrane filtere.</p>}
+      {!data.rows.length && <OfficeEmpty href={queueLink({ ...filters, site: "", owner: "", due: "all", state: "pending", booking: "all", dependency: "all", page: 1 })} label="Prikaži sve obaveze">Nema obaveza za izabrane filtere.</OfficeEmpty>}
       {data.rows.map(row => <WorkCard key={row.id} row={row} />)}
       <nav aria-label="Stranice obaveza" className="my-5 flex flex-wrap gap-3">
         {data.page > 1 && (
