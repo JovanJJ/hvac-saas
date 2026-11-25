@@ -8,6 +8,7 @@ async function writeChanged(path, value) {
   if ((await readFile(url, "utf8").catch(() => "")) !== value)
     await writeFile(url, value);
 }
+await writeChanged("public/offline/v2/field.css", await readFile(new URL("features/field/field.css", root), "utf8"));
 const common = {
   absWorkingDir: fileURLToPath(root),
   bundle: true,

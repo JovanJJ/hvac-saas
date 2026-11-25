@@ -1,4 +1,5 @@
 "use client";
+import { FieldIdentity, fieldTarget } from "@/features/field/presentation";
 import { useEffect, useId, useRef, useState } from "react";
 import {
   outcomeLabels,
@@ -20,18 +21,21 @@ import {
 type Item = OfflineBundle["visit"]["items"][number];
 function Text({
   label,
+  id: suppliedId,
   value,
   onChange,
   multiline = false,
   numeric = false,
 }: {
   label: string;
+  id?: string;
   value: string;
   onChange: (value: string) => void;
   multiline?: boolean;
   numeric?: boolean;
 }) {
-  const id = useId();
+  const generatedId = useId();
+  const id = suppliedId ?? generatedId;
   return (
     <div className="field">
       <label htmlFor={id}>{label}</label>
@@ -57,16 +61,19 @@ function Text({
 }
 function Choice({
   label,
+  id: suppliedId,
   value,
   choices,
   onChange,
 }: {
   label: string;
+  id?: string;
   value: string;
   choices: Record<string, string>;
   onChange: (value: string) => void;
 }) {
-  const id = useId();
+  const generatedId = useId();
+  const id = suppliedId ?? generatedId;
   return (
     <div className="field">
       <label htmlFor={id}>{label}</label>
@@ -219,13 +226,8 @@ export function DraftEditor({
   }
   return (
     <section className="card" aria-label={`Unos ${item.code}`}>
-      <h2>
-        {item.code} · {item.room}
-      </h2>
-      <p>
-        {item.model} · {item.serial}
-      </p>
-      <p role="status">
+      <FieldIdentity code={item.code} room={item.room} model={item.model} serial={item.serial} planned={item.planned} />
+      <p role="status" className="field-state">
         {state === "saving"
           ? "Čuvanje na telefonu…"
           : state === "failed"
@@ -270,6 +272,7 @@ export function DraftEditor({
         <legend>Podaci sistema</legend>
         <Choice
           label="Ishod"
+          id={fieldTarget(item.id, "outcome")}
           value={values.outcome}
           choices={outcomeLabels}
           onChange={(outcome) =>
@@ -284,12 +287,14 @@ export function DraftEditor({
         />
         <Text
           label="Nalaz"
+          id={fieldTarget(item.id, "finding")}
           value={values.finding}
           onChange={(finding) => patch({ finding })}
           multiline
         />
         <Text
           label="Razlog bez pristupa"
+          id={fieldTarget(item.id, "noAccessReason")}
           value={values.noAccessReason}
           onChange={(noAccessReason) => patch({ noAccessReason })}
           multiline
@@ -442,6 +447,7 @@ export function DraftEditor({
           <legend>Sledeća radnja</legend>
           <Choice
             label="Vrsta radnje"
+          id={fieldTarget(item.id, "followUp")}
             value={values.followUp?.kind ?? ""}
             choices={{ "": "Bez radnje", ...actionLabels }}
             onChange={(kind) =>
@@ -463,6 +469,7 @@ export function DraftEditor({
             <>
               <Choice
                 label="Odgovorni član tima"
+          id={fieldTarget(item.id, "owner")}
                 value={values.followUp.ownerId}
                 choices={{
                   "": "Izaberite odgovornu osobu",
@@ -476,6 +483,7 @@ export function DraftEditor({
               />
               <Text
                 label="Rok radnje (GGGG-MM-DD)"
+          id={fieldTarget(item.id, "deadline")}
                 value={values.followUp.dueDate}
                 onChange={(dueDate) =>
                   patch({ followUp: { ...values.followUp!, dueDate } })
@@ -504,6 +512,7 @@ export function DraftEditor({
               (!!record.attemptedAt && record.errorStatus !== 422) ||
               (!queued && state === "failed")
             }
+            data-edit-draft={queued || undefined}
             onClick={() => action(queued ? "edit" : "queue")}
           >
             {queued ? "Nastavi izmenu nacrta" : "Pripremi za slanje"}
@@ -519,6 +528,7 @@ export function DraftEditor({
           </button>
         </div>
       )}
+      <p><a href={`#visit-${bundle.visit.id}-summary`}>Pregled posete i predaja</a></p>
       {queued && (
         <p>Pripremljeno za slanje. Podaci još nisu poslati kancelariji.</p>
       )}

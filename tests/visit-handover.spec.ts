@@ -107,6 +107,8 @@ test("four systems persist from Today through office handover and customer previ
       .getByRole("combobox", { name: "Ishod", exact: true })
       .selectOption("serviced");
     await form("KL-01").getByLabel("Obavljeni radovi").fill("Čišćenje filtera");
+    await page.getByRole("button", { name: "Predaj kancelariji", exact: true }).click();
+    await expect(page.getByRole("alert").filter({ hasText: "Sačuvajte izmene sistema" })).toBeVisible();
     await form("KL-01")
       .getByLabel("Interna beleška (ne ulazi u izveštaj)")
       .fill("INTERNO-NE-OBJAVI");
@@ -177,8 +179,10 @@ test("four systems persist from Today through office handover and customer previ
       page.getByRole("alert").filter({ hasText: "odgovorne članove" }),
     ).toContainText("odgovorne članove tima");
     await expect(
-      page.getByText("KL-03: izaberite odgovornog člana tima i rok."),
+      page.getByRole("link", { name: "KL-03: izaberite odgovornog člana tima.", exact: true }),
     ).toBeVisible();
+    await page.getByRole("link", { name: "KL-03: izaberite odgovornog člana tima.", exact: true }).click();
+    await expect(form("KL-03").getByRole("combobox", { name: "Odgovorni član tima" })).toBeFocused();
     await form("KL-03")
       .getByRole("combobox", { name: "Odgovorni član tima" })
       .selectOption({ index: 1 });

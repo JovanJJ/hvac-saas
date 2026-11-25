@@ -1,3 +1,4 @@
+import shellAssets from "../features/offline/shell-assets.json";
 import { openWorkspaceControls } from "./staff-controls";
 import { test, expect, chromium, type Page } from "@playwright/test";
 import { mkdtemp, rm } from "node:fs/promises";
@@ -79,7 +80,8 @@ test("download survives a full browser restart offline; missing visits, removal 
       }
       return result;
     });
-    expect(cache).toHaveLength(9);
+    expect(cache).toHaveLength(shellAssets.files.length);
+    expect(cache.map(entry => entry.path).sort()).toEqual([...shellAssets.files].sort());
     for (const entry of cache) {
       expect(entry.name).toMatch(/^teren-shell-v2-[a-f0-9]{12}$/);
       expect(entry.path).toMatch(/^\/offline\/v[12]\//);

@@ -1,3 +1,4 @@
+import { openWorkspaceControls } from "./staff-controls";
 import { test, expect, type Page } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
 import { randomUUID, createHash } from "node:crypto";
@@ -19,7 +20,7 @@ async function login(page: Page, email = "owner.a@hvac.example.invalid") {
   await page.getByLabel("Email adresa").fill(email);
   await page.getByLabel("Lozinka", { exact: true }).fill(process.env.SEED_PASSWORD!);
   await page.getByRole("button", { name: "Prijavi se", exact: true }).click();
-  await expect(page).toHaveURL(/\/(office|today|onboarding)$/);
+  await expect(page).toHaveURL(/\/(office|today|onboarding|account)$/);
 }
 function records(bytes: Uint8Array) {
   const grid = parseImport("export.csv", bytes);
@@ -48,7 +49,8 @@ test("owner downloads joinable CSV archive with same-label systems, safe Serbian
     await first.db.query("update public.systems set archived_at=now() where id=$1", [first.systemIds[0]]);
     const source = (await first.db.query("select to_jsonb(i) as data from public.visit_items i where visit_id=$1 order by id", [first.visitId])).rows;
     await login(page);
-    await page.getByRole("link", { name: "Izvoz podataka", exact: true }).click();
+    await openWorkspaceControls(page);
+    await page.getByRole("navigation", { name: "Podešavanja i nalog" }).getByRole("link", { name: "Izvoz podataka", exact: true }).click();
     await expect(page.getByRole("heading", { level: 1 })).toHaveText("Izvoz podataka");
     await expect(page.getByText("Obuhvat: Cela organizacija", { exact: true })).toBeVisible();
     const download = page.waitForEvent("download");

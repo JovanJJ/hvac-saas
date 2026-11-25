@@ -1,3 +1,4 @@
+import { openStaffMenu } from "./staff-controls";
 import { test, expect, type Page } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
 import { randomUUID } from "node:crypto";
@@ -61,7 +62,7 @@ test("CSV preview resolves ambiguity, remaps columns and leaves register and fin
       )
     ).rows;
     await login(page);
-    await page.getByRole("link", { name: "Uvoz opreme", exact: true }).click();
+    await (await openStaffMenu(page)).getByRole("link", { name: "Uvoz opreme", exact: true }).click();
     await page.getByLabel("CSV ili XLSX fajl").setInputFiles({
       name: "fiktivna-oprema.csv",
       mimeType: "text/csv",
@@ -99,7 +100,7 @@ test("CSV preview resolves ambiguity, remaps columns and leaves register and fin
     await expect(page.getByRole("article", { name: "Red 2" })).toContainText(
       "00023",
     );
-    const firstDigest = await page.locator("details p").textContent();
+    const firstDigest = await page.getByRole("main").locator("details").filter({ has: page.locator("summary").filter({ hasText: "Identifikator sačuvanog pregleda" }) }).locator("p").textContent();
     await page
       .getByRole("combobox", { name: "Serijski broj", exact: true })
       .selectOption("");
@@ -109,7 +110,7 @@ test("CSV preview resolves ambiguity, remaps columns and leaves register and fin
         .getByRole("article", { name: "Red 2" })
         .getByText("Serijski broj", { exact: true }),
     ).toHaveCount(0);
-    expect(await page.locator("details p").textContent()).not.toBe(firstDigest);
+    expect(await page.getByRole("main").locator("details").filter({ has: page.locator("summary").filter({ hasText: "Identifikator sačuvanog pregleda" }) }).locator("p").textContent()).not.toBe(firstDigest);
     await page.reload();
     await expect(page.getByRole("article", { name: "Red 2" })).toContainText(
       "Pronađen sistem",

@@ -1,3 +1,4 @@
+import { FieldSummary } from "@/features/field/presentation";
 import { requireWorkspace } from "@/features/workspaces/dal";
 import { OverviewError } from "@/features/office/overview-state";
 import { DraftBoundary } from "@/features/offline/draft-boundary";
@@ -19,8 +20,6 @@ import { RevisionLink } from "@/features/reports/pages";
 import {
   visitStatusLabels,
   actionLabels,
-  outcomeLabels,
-  submissionIssues,
   totals,
 } from "./model";
 
@@ -36,7 +35,7 @@ export async function VisitWorkspace({
   const photos = await attachments(context.workspace.organization.id, id);
   const editable =
     visit.status === "scheduled" || visit.status === "in_progress";
-  const issues = submissionIssues(visit.items);
+  const issues: string[] = [];
   const pendingPhotos = photos.filter(
     (photo) => photo.state === "reserved",
   ).length;
@@ -109,9 +108,10 @@ export async function VisitWorkspace({
           organizationId={context.workspace.organization.id}
           visitId={id}
         >
-          <p>Sačuvajte svaki sistem pre predaje. Rad zahteva internet vezu.</p>
+          <p className="field-state">Sačuvajte svaki sistem pre predaje. Ovaj obrazac zahteva internet vezu. Za rad bez interneta najpre preuzmite posetu na ekranu Danas.</p>
+          <nav aria-label="Prečice unosa" className="field-system-links"><a href={`#visit-${id}-summary`}>Pregled pre predaje</a>{visit.items.map(item => <a key={item.id} href={`#system-${item.id}`}>{item.code} · {item.room}</a>)}</nav>
           {visit.items.map((item) => (
-            <div key={item.id} id={`system-${item.id}`}>
+            <div key={item.id} id={`system-${item.id}`} tabIndex={-1} className="field-system">
               {item.systemId && (
                 <Link
                   className="button secondary mb-3"
@@ -143,23 +143,8 @@ export async function VisitWorkspace({
               operationId={randomUUID()}
             />
           )}
-          <section className="card my-5">
-            <h2>Pregled pre predaje</h2>
-            {visit.items.map((i) => (
-              <p key={i.id}>
-                {i.code}: {outcomeLabels[i.outcome]}
-              </p>
-            ))}
-            {issues.length ? (
-              <ul aria-label="Potrebne dopune">
-                {issues.map((issue) => (
-                  <li key={issue}>{issue}</li>
-                ))}
-              </ul>
-            ) : (
-              <p>Svi ishodi su uneti. Poseta je spremna za predaju.</p>
-            )}
-          </section>
+          <div id={`visit-${id}-summary`} tabIndex={-1}><FieldSummary items={visit.items} showTotals={false} /></div>
+          {!!issues.length && <p role="alert">{issues.join(" ")}</p>}
           <TransitionForm
             key={`submit:${visit.version}`}
             visit={visit}

@@ -1,4 +1,5 @@
 export type RegisterRow = {
+  unit_serials?: string[];
   id: string;
   version?: number;
   archived_at?: string | null;

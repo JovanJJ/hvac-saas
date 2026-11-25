@@ -6,6 +6,7 @@
     "/offline/v2/app.js",
     "/offline/v2/storage.js",
     "/offline/v2/styles.css",
+    "/offline/v2/field.css",
     "/offline/v1/index.html",
     "/offline/v1/storage.js",
     "/offline/v1/icon.svg",

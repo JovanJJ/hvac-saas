@@ -1,4 +1,5 @@
 "use client";
+import { FieldIdentity, fieldTarget } from "@/features/field/presentation";
 import { useActionState, useId, useRef, useState, type ReactNode } from "react";
 import { FormField } from "@/components/ui/form-field";
 import { SelectField } from "@/components/ui/select-field";
@@ -20,6 +21,7 @@ function Field({
   label: string;
   name: string;
   value?: string;
+  id?: string;
   type?: string;
   inputMode?: "decimal";
 }) {
@@ -38,12 +40,15 @@ function Note({
   label,
   name,
   value = "",
+  id: suppliedId,
 }: {
   label: string;
   name: string;
   value?: string;
+  id?: string;
 }) {
-  const id = useId();
+  const generatedId = useId();
+  const id = suppliedId ?? generatedId;
   return (
     <div className="my-4">
       <label htmlFor={id}>{label}</label>
@@ -77,6 +82,7 @@ export function ItemForm({
   operationId: string;
 }) {
   const [stableOperationId] = useState(operationId);
+  const [dirty, setDirty] = useState(false);
   const templateKinds = ["Temperatura izduva", "Struja"];
   const templateReadings = templateKinds.map((kind) =>
     item.readings.find((reading) => reading.kind === kind),
@@ -141,7 +147,9 @@ export function ItemForm({
         payload: JSON.stringify(data),
       }))
         command.set(key, value);
-      return visitCommand(previous, command);
+      const result = await visitCommand(previous, command);
+      if (result.success) setDirty(false);
+      return result;
     },
     {},
   );
@@ -152,14 +160,11 @@ export function ItemForm({
       className="card my-5"
       aria-label={`Unos ${item.code}`}
       data-version={item.version}
+      data-field-dirty={dirty ? "true" : undefined}
+      onChange={() => setDirty(true)}
     >
-      <h2>
-        {item.code} · {item.room}
-      </h2>
-      <p>
-        {item.model} {item.serial} ·{" "}
-        {item.planned ? "Planiran sistem" : "Dodat na terenu"}
-      </p>
+      <FieldIdentity code={item.code} room={item.room} model={item.model} serial={item.serial} planned={item.planned} />
+      <p aria-live="polite" className="field-state">{pending ? "Slanje na server…" : dirty ? "Izmene u obrascu još nisu sačuvane." : "Unos uz internet vezu · sačuvajte sistem pre predaje."}</p>
       {item.enteredAt && (
         <p className="text-sm">
           Sačuvano na serveru ·{" "}
@@ -169,7 +174,7 @@ export function ItemForm({
           · Autor: {item.enteredByLabel ?? "Raniji član tima"}
         </p>
       )}
-      <SelectField label="Ishod" name="outcome" defaultValue={item.outcome}>
+      <SelectField id={fieldTarget(item.id, "outcome")} label="Ishod" name="outcome" defaultValue={item.outcome}>
         {Object.entries(outcomeLabels).map(([value, label]) => (
           <option key={value} value={value}>
             {label}
@@ -177,9 +182,11 @@ export function ItemForm({
         ))}
       </SelectField>
       <Note label="Obavljeni radovi" name="work" value={item.work} />
-      <Note label="Nalaz za klijenta" name="finding" value={item.finding} />
+      <Note label="Nalaz za klijenta"
+            id={fieldTarget(item.id, "finding")}  name="finding" value={item.finding} />
       <Note
         label="Razlog bez pristupa"
+            id={fieldTarget(item.id, "noAccessReason")}
         name="noAccessReason"
         value={item.noAccessReason}
       />
@@ -246,9 +253,10 @@ export function ItemForm({
             <button
               type="button"
               className="button secondary mt-3"
-              onClick={() =>
-                setPartRows((rows) => rows.filter((row) => row !== index))
-              }
+              onClick={() => {
+                setDirty(true);
+                setPartRows((rows) => rows.filter((row) => row !== index));
+              }}
             >
               Ukloni materijal {index + 1}
             </button>
@@ -259,6 +267,7 @@ export function ItemForm({
           className="button secondary"
           disabled={partRows.length >= 20}
           onClick={() => {
+            setDirty(true);
             const index = nextPart.current++;
             setPartRows((rows) => [...rows, index]);
           }}
@@ -278,6 +287,7 @@ export function ItemForm({
           <legend>Podaci o radnji</legend>
           <SelectField
             label="Vrsta radnje"
+            id={fieldTarget(item.id, "followUp")}
             name="followKind"
             defaultValue={item.followUp?.kind ?? ""}
           >
@@ -290,6 +300,7 @@ export function ItemForm({
           </SelectField>
           <SelectField
             label="Odgovorni član tima"
+            id={fieldTarget(item.id, "owner")}
             name="ownerId"
             defaultValue={item.followUp?.ownerId ?? ""}
           >
@@ -308,6 +319,7 @@ export function ItemForm({
           </SelectField>
           <Field
             label="Rok"
+            id={fieldTarget(item.id, "deadline")}
             name="dueDate"
             type="date"
             value={item.followUp?.dueDate ?? ""}
@@ -342,6 +354,7 @@ export function TransitionForm({
   operationId: string;
   children?: ReactNode;
 }) {
+  const [localIssue, setLocalIssue] = useState("");
   const [state, action, pending] = useActionState(
     async (
       previous: { message?: string; success?: boolean },
@@ -365,6 +378,17 @@ export function TransitionForm({
     <form
       action={action}
       onReset={(e) => e.preventDefault()}
+      onSubmit={event => {
+        setLocalIssue("");
+        if (kind !== "submit") return;
+        const dirtyForm = event.currentTarget.closest("main")?.querySelector<HTMLFormElement>('form[data-field-dirty="true"]');
+        if (dirtyForm) {
+          event.preventDefault();
+          setLocalIssue("Sačuvajte izmene sistema pre predaje kancelariji.");
+          dirtyForm.scrollIntoView({ block: "start" });
+          dirtyForm.querySelector<HTMLElement>('select[name="outcome"]')?.focus({ preventScroll: true });
+        }
+      }}
       className="card my-5"
     >
       <input type="hidden" name="visitId" value={visit.id} />
@@ -382,6 +406,7 @@ export function TransitionForm({
         </SelectField>
       )}
       {children}
+      {localIssue && <p role="alert">{localIssue}</p>}
       <Status {...state} />
       <button type="submit" disabled={pending} className="button primary mt-4">
         {pending

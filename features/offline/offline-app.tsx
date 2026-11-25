@@ -1,7 +1,8 @@
 "use client";
 import { createRoot } from "react-dom/client";
 import { useEffect, useState } from "react";
-import { ReportTotals, SystemResult } from "@/features/reports/document";
+import { FieldSummary } from "@/features/field/presentation";
+import { SystemResult } from "@/features/reports/document";
 import { LifecycleHost, DeviceCleanupControl } from "./lifecycle-control";
 import { requestLifecycle } from "@/lib/offline/lifecycle";
 import { RecoveryPanel } from "./recovery-panel";
@@ -44,21 +45,13 @@ function VisitDetails({
     return draft
       ? {
           ...i,
-          outcome: draft.values.outcome,
+          ...draft.values,
           followUp: draft.values.followUp
             ? { ...i.followUp, ...draft.values.followUp }
             : null,
         }
       : i;
   });
-  const counts = {
-    planned: items.filter((i) => i.planned).length,
-    inspected: items.filter((i) =>
-      ["serviced", "repair_needed"].includes(i.outcome),
-    ).length,
-    actions: items.filter((i) => i.followUp && i.followUp.state !== "completed")
-      .length,
-  };
   return (
     <>
       <a className="button" href={entry}>
@@ -91,11 +84,11 @@ function VisitDetails({
       {drafts.length > 0 && (
         <p>Lokalni pregled · izmene još nisu potvrđene na serveru.</p>
       )}
-      <ReportTotals counts={counts} />
+      <div id={`visit-${visit.id}-summary`} tabIndex={-1}><FieldSummary items={items} local editable={editable} /></div>
       <RecoveryPanel identity={identity} bundle={bundle} />
       {visit.items.map((item) =>
         editable ? (
-          <div key={item.id}>
+          <div key={item.id} id={`system-${item.id}`} tabIndex={-1} className="field-system">
             <DraftEditor
               key={`${item.id}:${item.version}:${drafts.find((d) => d.itemId === item.id)?.reconcileFrom ?? ""}`}
               identity={identity}
@@ -113,7 +106,7 @@ function VisitDetails({
             />
           </div>
         ) : (
-          <section className="card" key={item.id}>
+          <section className="card" key={item.id} id={`system-${item.id}`} tabIndex={-1}>
             <SystemResult item={item} />
             <LocalPhotoPanel
               identity={identity}

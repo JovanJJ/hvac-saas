@@ -99,7 +99,7 @@ export function OperationForm({
           ))}
         </SelectField>
       )}
-      {fields.map(([name, label]) => (
+      <div className="grid min-w-0 gap-5 md:grid-cols-2">{fields.map(([name, label]) => (
         <FormField
           key={name}
           name={name}
@@ -119,7 +119,7 @@ export function OperationForm({
             ].includes(name)
           }
         />
-      ))}
+      ))}</div>
       {kind === "visit" && (
         <>
           <p>

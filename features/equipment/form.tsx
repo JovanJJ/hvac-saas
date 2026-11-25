@@ -40,7 +40,7 @@ export function RegisterForm({
       <input type="hidden" name="operationId" value={base.operationId} />
       <input type="hidden" name="version" value={base.version} />
       <input type="hidden" name="action" value={action} />
-      <fieldset disabled={pending || state.success} className="m-0 space-y-4">
+      <fieldset disabled={pending || state.success} className="m-0 min-w-0 space-y-4 border-0 p-0">
         {!simple && (
           <>
             {entity === "unit" && (
@@ -54,7 +54,7 @@ export function RegisterForm({
                 <option value="outdoor">Spoljašnja jedinica</option>
               </SelectField>
             )}
-            {fields[entity].map(([name, label]) => (
+            <div className="grid min-w-0 gap-5 md:grid-cols-2">{fields[entity].map(([name, label]) => (
               <FormField
                 key={name}
                 id={`${id}-${name}`}
@@ -74,7 +74,7 @@ export function RegisterForm({
                 onChange={(e) => setDraft({ ...draft, [name]: e.target.value })}
                 errors={state.errors?.[name]}
               />
-            ))}
+            ))}</div>
           </>
         )}
         {(action === "archive" || action === "replace") && (

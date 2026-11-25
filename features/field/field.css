@@ -1,0 +1,17 @@
+.field-identity { border-bottom: 1px solid #dce4df; padding-bottom: 1rem; margin-bottom: 1rem; overflow-wrap: anywhere; }
+.field-identity h2 { margin: .25rem 0; font-size: 1.35rem; line-height: 1.35; }
+.field-eyebrow { color: #08665f; text-transform: uppercase; font-size: .75rem; font-weight: 700; letter-spacing: .06em; }
+.field-system { min-width: 0; margin-block: 2rem; padding: .25rem .75rem; border-left: 3px solid #a8c4bd; scroll-margin-top: 1rem; }
+.field-state { padding: .75rem 1rem; border: 1px solid #cbd9d3; border-radius: .6rem; background: #e6f0eb; overflow-wrap: anywhere; }
+.field-summary { min-width: 0; }
+.field-system-links { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,16rem),1fr)); gap: .75rem; margin: 1rem 0; }
+.field-system-links a { display: block; padding: .75rem; border: 1px solid #cbd9d3; border-radius: .6rem; background: #f8faf7; overflow-wrap: anywhere; }
+.field-system-links span { display: block; font-size: .85rem; color: #475f63; }
+.field-validation { padding: 1rem 1rem 1rem 2rem; border: 1px solid #d4ac9f; border-radius: .6rem; background: #fff7f3; color: #803b27; }
+.field-validation li { margin-block: .5rem; }
+.field-validation a { color: inherit; }
+.field-summary :focus, [id^="field-"]:focus, [id^="system-"]:focus { outline: 3px solid #08665f; outline-offset: 3px; }
+.field-help { font-size: .9rem; color: #475f63; }
+.field-summary .totals { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: .5rem; }
+.field-summary .totals dt { min-height: 2.8em; font-size: .8rem; line-height: 1.4; }
+.field-summary .totals dd { font-size: 1.4rem; color: #08665f; }

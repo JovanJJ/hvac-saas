@@ -13,8 +13,8 @@ export function ServiceHistory({
   office: boolean;
 }) {
   return (
-    <section className="my-8 space-y-4" aria-label="Servisna istorija">
-      <h2>Servisna istorija</h2>
+    <section className="my-8 min-w-0 space-y-4" aria-label="Servisna istorija">
+      <h2 id="service-history" tabIndex={-1} className="scroll-mt-5">Servisna istorija</h2>
       <p>
         Predati i izdati nalazi za ovu opremu. Izmene u registru ne menjaju
         izdate izveštaje.

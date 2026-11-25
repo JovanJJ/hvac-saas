@@ -56,6 +56,7 @@ export function SubmissionControl({
   return (
     <section className="card" aria-label="Predaja posete">
       <h2>Predaja kancelariji</h2>
+      <p className="field-help">Sačuvano na telefonu → pripremljeno za slanje → potvrđeno na serveru → predato kancelariji. Fotografije i nacrti moraju biti potvrđeni pre predaje.</p>
       {submission ? (
         <>
           <p role="status">

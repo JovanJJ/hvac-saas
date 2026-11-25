@@ -15,7 +15,8 @@ export function VisitList({
     <div className="mt-6 grid gap-4">
       {!visits.length && <p>Nema zakazanih poseta.</p>}
       {visits.map((visit) => (
-        <article key={visit.id} className="card min-w-0 break-words">
+        <article key={visit.id} className={`card min-w-0 break-words ${offlineScope ? "field-visit-row" : ""}`}>
+          {offlineScope && <p className="field-eyebrow">Dodeljena poseta · {visit.systems.length} sistema</p>}
           <h2>{visit.site}</h2>
           <p>{visit.address}</p>
           {visit.planId && (
